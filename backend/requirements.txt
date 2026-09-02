@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+langgraph
+langchain-anthropic
+langchain-core
+pydantic>=2.0
+python-dotenv
+sse-starlette
+httpx
