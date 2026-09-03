@@ -43,7 +43,6 @@ Respond in the same language as the remix.
 def get_llm() -> ChatAnthropic:
     return ChatAnthropic(
         model=MODEL,
-        temperature=0.2,
         max_tokens=1500,
     )
 

@@ -34,7 +34,6 @@ Respond in the same language as the brief (French brief → French analysis, Eng
 def get_llm() -> ChatAnthropic:
     return ChatAnthropic(
         model=MODEL,
-        temperature=0.3,
         max_tokens=2000,
     )
 
