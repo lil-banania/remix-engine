@@ -229,36 +229,23 @@ function VisualCard({ visual }) {
 
   return (
     <div className="visual-card">
-      <div className="visual-card-header">
-        <h3>{visual.format_label}</h3>
+      <div className="visual-card-top">
+        <span className="visual-format-tag">{visual.format_label}</span>
         {visual.has_image && <span className="visual-badge">Image IA</span>}
       </div>
-      <div className="visual-card-body">
-        <div className="visual-mockup-col">
-          {MockupComponent && <MockupComponent visual={visual} />}
-        </div>
-        <div className="visual-info-col">
-          <div className="visual-info-item">
-            <div className="vi-label">Headline</div>
-            <div className="vi-headline">{visual.headline}</div>
-          </div>
-          {visual.subline && (
-            <div className="visual-info-item">
-              <div className="vi-label">Subline / CTA</div>
-              <div className="vi-value">{visual.subline}</div>
-            </div>
-          )}
-          <div className="visual-info-item">
-            <div className="vi-label">Direction artistique</div>
-            <div className="vi-value">{visual.art_direction}</div>
-          </div>
-          {visual.image_prompt && (
-            <details className="visual-prompt-details">
-              <summary>Prompt image</summary>
-              <p>{visual.image_prompt}</p>
-            </details>
-          )}
-        </div>
+      <div className="visual-card-mockup">
+        {MockupComponent && <MockupComponent visual={visual} />}
+      </div>
+      <div className="visual-card-caption">
+        <div className="vi-headline">{visual.headline}</div>
+        {visual.subline && <div className="vi-subline">{visual.subline}</div>}
+        <div className="vi-art-direction">{visual.art_direction}</div>
+        {visual.image_prompt && (
+          <details className="visual-prompt-details">
+            <summary>Voir le prompt</summary>
+            <p>{visual.image_prompt}</p>
+          </details>
+        )}
       </div>
     </div>
   )
@@ -720,6 +707,58 @@ export default function App() {
             </div>
           </div>
 
+          {/* Visual Director Results — shown first */}
+          {visuals.length > 0 && (
+            <div className="visuals-section">
+              <div className="export-bar visuals-bar">
+                <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--accent)' }}>
+                  Visual Director — {visuals.length} format{visuals.length > 1 ? 's' : ''}
+                </h2>
+                <button className="btn btn-secondary" onClick={regenerateVisuals}>
+                  Re-générer
+                </button>
+              </div>
+              <div className="visuals-grid">
+                {visuals.map((v, i) => (
+                  <VisualCard key={i} visual={v} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Standalone visual generation button when no visuals were requested */}
+          {visuals.length === 0 && selectedVisualFormats.length === 0 && (
+            <div className="card" style={{ marginTop: 0, marginBottom: 32, textAlign: 'center' }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                Ajouter des visuels IA à ce remix ?
+              </p>
+              <div className="formats-grid" style={{ marginBottom: 16 }}>
+                {VISUAL_FORMATS.map(f => (
+                  <div
+                    key={f.key}
+                    className={`format-chip visual-chip ${selectedVisualFormats.includes(f.key) ? 'selected' : ''}`}
+                    onClick={() => toggleVisualFormat(f.key)}
+                  >
+                    <span className="chip-label">{f.label}</span>
+                    <span className="chip-detail">{f.detail}</span>
+                  </div>
+                ))}
+              </div>
+              {selectedVisualFormats.length > 0 && (
+                <button className="btn btn-primary" onClick={regenerateVisuals}>
+                  Générer {selectedVisualFormats.length} visuel{selectedVisualFormats.length > 1 ? 's' : ''}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Text remix results */}
+          <div className="export-bar" style={{ marginTop: visuals.length > 0 ? 40 : 0 }}>
+            <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)' }}>
+              Déclinaisons texte
+            </h2>
+          </div>
+
           <div className="results-list">
             {results.map((r, i) => (
               <div className="remix-card" key={i}>
@@ -744,15 +783,15 @@ export default function App() {
                     <div className="section-value">{r.remix.adapted_concept}</div>
                   </div>
 
-                  <div className="remix-section">
-                    <div className="section-label">Description narrative</div>
+                  <details className="remix-details-section">
+                    <summary className="section-label">Narration détaillée</summary>
                     <div className="section-value">{r.remix.narrative_description}</div>
-                  </div>
+                  </details>
 
-                  <div className="remix-section">
-                    <div className="section-label">Notes de production</div>
+                  <details className="remix-details-section">
+                    <summary className="section-label">Notes de production</summary>
                     <div className="section-value">{r.remix.production_notes}</div>
-                  </div>
+                  </details>
 
                   <div className="remix-section">
                     <div className="section-label">Tone check</div>
@@ -785,51 +824,6 @@ export default function App() {
               </div>
             ))}
           </div>
-
-          {/* Visual Director Results */}
-          {visuals.length > 0 && (
-            <div className="visuals-section">
-              <div className="export-bar" style={{ marginTop: 48 }}>
-                <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--accent)' }}>
-                  Visual Director — {visuals.length} format{visuals.length > 1 ? 's' : ''}
-                </h2>
-                <button className="btn btn-secondary" onClick={regenerateVisuals}>
-                  Re-générer les visuels
-                </button>
-              </div>
-              <div className="visuals-list">
-                {visuals.map((v, i) => (
-                  <VisualCard key={i} visual={v} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Standalone visual generation button when no visuals were requested */}
-          {visuals.length === 0 && selectedVisualFormats.length === 0 && (
-            <div className="card" style={{ marginTop: 32, textAlign: 'center' }}>
-              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
-                Ajouter des visuels IA à ce remix ?
-              </p>
-              <div className="formats-grid" style={{ marginBottom: 16 }}>
-                {VISUAL_FORMATS.map(f => (
-                  <div
-                    key={f.key}
-                    className={`format-chip visual-chip ${selectedVisualFormats.includes(f.key) ? 'selected' : ''}`}
-                    onClick={() => toggleVisualFormat(f.key)}
-                  >
-                    <span className="chip-label">{f.label}</span>
-                    <span className="chip-detail">{f.detail}</span>
-                  </div>
-                ))}
-              </div>
-              {selectedVisualFormats.length > 0 && (
-                <button className="btn btn-primary" onClick={regenerateVisuals}>
-                  Générer {selectedVisualFormats.length} visuel{selectedVisualFormats.length > 1 ? 's' : ''}
-                </button>
-              )}
-            </div>
-          )}
         </>
       )}
     </div>
