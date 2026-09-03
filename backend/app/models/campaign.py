@@ -155,6 +155,10 @@ class RemixOutput(BaseModel):
     tone_check: str = Field(
         description="Verification that tone stays consistent with the brand"
     )
+    scenario_id: Optional[int] = Field(
+        default=None,
+        description="Scenario ID this remix belongs to (None for legacy single-scenario mode)",
+    )
 
 
 class QualityVerdict(BaseModel):

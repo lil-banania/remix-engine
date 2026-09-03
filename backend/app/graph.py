@@ -6,6 +6,7 @@ from langgraph.graph import StateGraph, END
 
 from app.models.state import GraphState
 from app.agents.analyzer import analyze_campaign
+from app.agents.scenario_generator import generate_scenarios
 from app.agents.planner import plan_remixes
 from app.agents.writer import write_remixes
 from app.agents.checker import check_quality
@@ -23,14 +24,16 @@ def build_graph() -> StateGraph:
     """Build and compile the Remix Engine graph.
 
     Flow:
-        analyze → plan → write → check → [visual_direct] → END
+        analyze → scenarios → plan → write → check → [visual_direct] → END
 
+    The scenarios node generates 3 creative directions.
     The visual_direct node runs only if visual_formats is non-empty.
     """
     graph = StateGraph(GraphState)
 
     # Add nodes
     graph.add_node("analyze", analyze_campaign)
+    graph.add_node("scenarios", generate_scenarios)
     graph.add_node("plan", plan_remixes)
     graph.add_node("write", write_remixes)
     graph.add_node("check", check_quality)
@@ -38,7 +41,8 @@ def build_graph() -> StateGraph:
 
     # Define edges
     graph.set_entry_point("analyze")
-    graph.add_edge("analyze", "plan")
+    graph.add_edge("analyze", "scenarios")
+    graph.add_edge("scenarios", "plan")
     graph.add_edge("plan", "write")
     graph.add_edge("write", "check")
     graph.add_conditional_edges("check", _should_generate_visuals)

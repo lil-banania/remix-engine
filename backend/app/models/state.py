@@ -15,6 +15,7 @@ from app.models.campaign import (
     RemixRequest,
 )
 from app.models.visuals import VisualFormat, VisualOutput
+from app.models.scenario import CreativeScenario, ScenarioResult
 
 
 class GraphState(BaseModel):
@@ -26,12 +27,16 @@ class GraphState(BaseModel):
     # --- Campaign Analyzer output ---
     analysis: Optional[CampaignAnalysis] = None
 
+    # --- Scenario Generator output ---
+    scenarios: list[CreativeScenario] = Field(default_factory=list)
+
     # --- Remix Planner output ---
     remix_request: Optional[RemixRequest] = None
     planned_formats: list[RemixFormat] = Field(default_factory=list)
 
-    # --- Creative Writer output ---
+    # --- Creative Writer output (per-scenario) ---
     remixes: list[RemixOutput] = Field(default_factory=list)
+    scenario_results: list[ScenarioResult] = Field(default_factory=list)
 
     # --- Quality Checker output ---
     results: list[RemixResult] = Field(default_factory=list)

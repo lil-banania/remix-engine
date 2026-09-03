@@ -47,6 +47,7 @@ async def _generate_one_remix(
     fmt: RemixFormat,
     audience: str | None,
     market: str | None,
+    scenario_context: str = "",
 ) -> RemixOutput:
     """Generate a single remix for one format."""
     specs = FORMAT_SPECS[fmt]
@@ -58,7 +59,7 @@ async def _generate_one_remix(
     prompt = f"""\
 CAMPAIGN ANALYSIS:
 {analysis_text}
-
+{scenario_context}
 TARGET FORMAT: {specs['label']}
 - Duration: {specs['duration']}
 - Aspect ratio: {specs['aspect_ratio']}
@@ -81,23 +82,72 @@ Generate the creative declination for this format."""
 
 
 async def write_remixes(state: GraphState) -> dict:
-    """Generate all remixes in parallel (fan-out)."""
+    """Generate all remixes in parallel, per scenario if scenarios exist."""
     if not state.analysis or not state.planned_formats:
         return {"error": "Missing analysis or planned formats"}
 
     analysis_text = state.analysis.model_dump_json(indent=2)
-
     audience = state.remix_request.target_audience if state.remix_request else None
     market = state.remix_request.target_market if state.remix_request else None
 
-    # Fan-out: generate all remixes in parallel
-    tasks = [
-        _generate_one_remix(analysis_text, fmt, audience, market)
-        for fmt in state.planned_formats
-    ]
-    remixes = await asyncio.gather(*tasks)
+    scenarios = state.scenarios or []
+
+    if not scenarios:
+        # Legacy mode: no scenarios, generate remixes directly
+        tasks = [
+            _generate_one_remix(analysis_text, fmt, audience, market)
+            for fmt in state.planned_formats
+        ]
+        remixes = await asyncio.gather(*tasks)
+        return {
+            "remixes": list(remixes),
+            "current_step": "written",
+        }
+
+    # Multi-scenario mode: generate remixes for each scenario x format
+    from app.models.scenario import ScenarioResult
+
+    print(f"[writer] Generating remixes for {len(scenarios)} scenarios x {len(state.planned_formats)} formats")
+
+    all_tasks = []
+    task_map = []  # (scenario_index, format) for each task
+
+    for i, scenario in enumerate(scenarios):
+        scenario_context = f"""
+CREATIVE DIRECTION FOR THIS REMIX:
+- Direction: "{scenario.title}"
+- Angle: {scenario.angle}
+- Mood: {scenario.mood}
+
+IMPORTANT: Your remix MUST follow this specific creative direction. The concept adaptation should reflect this angle, not just the generic campaign concept.
+"""
+        for fmt in state.planned_formats:
+            all_tasks.append(
+                _generate_one_remix(analysis_text, fmt, audience, market, scenario_context)
+            )
+            task_map.append((i, fmt))
+
+    all_remixes_raw = await asyncio.gather(*all_tasks)
+
+    # Group remixes by scenario
+    scenario_remixes: dict[int, list] = {i: [] for i in range(len(scenarios))}
+    for remix, (scenario_idx, _fmt) in zip(all_remixes_raw, task_map):
+        scenario_remixes[scenario_idx].append(remix)
+
+    all_scenario_results = []
+    all_remixes = []
+    for i, scenario in enumerate(scenarios):
+        remixes = scenario_remixes[i]
+        all_scenario_results.append(ScenarioResult(
+            scenario=scenario,
+            results=[],  # filled by checker
+            visuals=[],
+        ))
+        all_remixes.extend(remixes)
+        print(f"[writer] Scenario '{scenario.title}': {len(remixes)} remixes done")
 
     return {
-        "remixes": list(remixes),
+        "remixes": all_remixes,
+        "scenario_results": all_scenario_results,
         "current_step": "written",
     }

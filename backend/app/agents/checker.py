@@ -78,7 +78,7 @@ Evaluate this declination."""
 
 
 async def check_quality(state: GraphState) -> dict:
-    """Quality-check all remixes in parallel."""
+    """Quality-check all remixes in parallel, grouped by scenario if applicable."""
     if not state.analysis or not state.remixes:
         return {"error": "Missing analysis or remixes"}
 
@@ -89,8 +89,33 @@ async def check_quality(state: GraphState) -> dict:
         for remix in state.remixes
     ]
     results = await asyncio.gather(*tasks)
+    results = list(results)
+
+    # If we have scenarios, group results by scenario_id
+    if state.scenarios and state.scenario_results:
+        from app.models.scenario import ScenarioResult
+
+        scenario_map: dict[int, list[RemixResult]] = {}
+        for r in results:
+            sid = getattr(r.remix, "scenario_id", None)
+            if sid is not None:
+                scenario_map.setdefault(sid, []).append(r)
+
+        updated_scenario_results = []
+        for sr in state.scenario_results:
+            updated_scenario_results.append(ScenarioResult(
+                scenario=sr.scenario,
+                results=scenario_map.get(sr.scenario.id, []),
+                visuals=[],
+            ))
+
+        return {
+            "results": results,
+            "scenario_results": updated_scenario_results,
+            "current_step": "checked",
+        }
 
     return {
-        "results": list(results),
+        "results": results,
         "current_step": "checked",
     }

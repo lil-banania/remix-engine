@@ -25,6 +25,7 @@ const VISUAL_FORMATS = [
 
 const PIPELINE_STEPS = [
   { key: 'analyze', label: 'Analyse de la campagne' },
+  { key: 'scenarios', label: 'Scénarios créatifs' },
   { key: 'plan', label: 'Planification des remixes' },
   { key: 'write', label: 'Génération créative' },
   { key: 'check', label: 'Contrôle qualité' },
@@ -233,19 +234,21 @@ function VisualCard({ visual }) {
         <span className="visual-format-tag">{visual.format_label}</span>
         {visual.has_image && <span className="visual-badge">Image IA</span>}
       </div>
-      <div className="visual-card-mockup">
-        {MockupComponent && <MockupComponent visual={visual} />}
-      </div>
-      <div className="visual-card-caption">
-        <div className="vi-headline">{visual.headline}</div>
-        {visual.subline && <div className="vi-subline">{visual.subline}</div>}
-        <div className="vi-art-direction">{visual.art_direction}</div>
-        {visual.image_prompt && (
-          <details className="visual-prompt-details">
-            <summary>Voir le prompt</summary>
-            <p>{visual.image_prompt}</p>
-          </details>
-        )}
+      <div className="visual-card-split">
+        <div className="visual-card-mockup">
+          {MockupComponent && <MockupComponent visual={visual} />}
+        </div>
+        <div className="visual-card-info">
+          <div className="vi-headline">{visual.headline}</div>
+          {visual.subline && <div className="vi-subline">{visual.subline}</div>}
+          <div className="vi-art-direction">{visual.art_direction}</div>
+          {visual.image_prompt && (
+            <details className="visual-prompt-details">
+              <summary>Voir le prompt</summary>
+              <p>{visual.image_prompt}</p>
+            </details>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -263,6 +266,9 @@ export default function App() {
   const [analysis, setAnalysis] = useState(null)
   const [results, setResults] = useState([])
   const [visuals, setVisuals] = useState([])
+  const [scenarios, setScenarios] = useState([])
+  const [scenarioResults, setScenarioResults] = useState([])
+  const [activeScenario, setActiveScenario] = useState(0)
   const [loadingStep, setLoadingStep] = useState('')
   const [completedSteps, setCompletedSteps] = useState([])
   const [error, setError] = useState('')
@@ -351,6 +357,8 @@ export default function App() {
       let finalAnalysis = null
       let finalResults = []
       let finalVisuals = []
+      let finalScenarios = []
+      let finalScenarioResults = []
 
       while (true) {
         const { done, value } = await reader.read()
@@ -377,8 +385,12 @@ export default function App() {
               if (payload.analysis) {
                 finalAnalysis = payload.analysis
                 setCompletedSteps(prev => [...new Set([...prev, 'analyze'])])
-                setLoadingStep('plan')
+                setLoadingStep('scenarios')
               }
+            } else if (node === 'scenarios') {
+              if (payload.scenarios) finalScenarios = payload.scenarios
+              setCompletedSteps(prev => [...new Set([...prev, 'scenarios'])])
+              setLoadingStep('plan')
             } else if (node === 'plan') {
               setCompletedSteps(prev => [...new Set([...prev, 'plan'])])
               setLoadingStep('write')
@@ -387,6 +399,7 @@ export default function App() {
               setLoadingStep('check')
             } else if (node === 'check') {
               if (payload.results) finalResults = payload.results
+              if (payload.scenario_results) finalScenarioResults = payload.scenario_results
               setCompletedSteps(prev => [...new Set([...prev, 'check'])])
               if (selectedVisualFormats.length > 0) {
                 setLoadingStep('visual_direct')
@@ -404,6 +417,9 @@ export default function App() {
       if (finalAnalysis) setAnalysis(finalAnalysis)
       if (finalResults.length) setResults(finalResults)
       if (finalVisuals.length) setVisuals(finalVisuals)
+      if (finalScenarios.length) setScenarios(finalScenarios)
+      if (finalScenarioResults.length) setScenarioResults(finalScenarioResults)
+      setActiveScenario(0)
       setStep('results')
     } catch (err) {
       setError(err.message)
@@ -489,6 +505,9 @@ export default function App() {
     setAnalysis(null)
     setResults([])
     setVisuals([])
+    setScenarios([])
+    setScenarioResults([])
+    setActiveScenario(0)
     setLoadingStep('')
     setCompletedSteps([])
     setError('')
@@ -696,6 +715,7 @@ export default function App() {
           <div className="export-bar">
             <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)' }}>
               {results.length} déclinaison{results.length > 1 ? 's' : ''} générée{results.length > 1 ? 's' : ''}
+              {scenarios.length > 0 && ` · ${scenarios.length} scénarios`}
             </h2>
             <div style={{ display: 'flex', gap: 12 }}>
               <button className="btn btn-secondary" onClick={exportMarkdown}>
@@ -706,6 +726,62 @@ export default function App() {
               </button>
             </div>
           </div>
+
+          {/* Scenario Carousel Navigation */}
+          {scenarios.length > 0 && (
+            <div className="scenario-carousel">
+              <button
+                className="scenario-arrow scenario-arrow-left"
+                disabled={activeScenario === 0}
+                onClick={() => setActiveScenario(prev => Math.max(0, prev - 1))}
+                aria-label="Scénario précédent"
+              >
+                ‹
+              </button>
+
+              <div className="scenario-tabs">
+                {scenarios.map((s, i) => (
+                  <button
+                    key={s.id}
+                    className={`scenario-tab ${i === activeScenario ? 'active' : ''}`}
+                    onClick={() => setActiveScenario(i)}
+                  >
+                    <span className="scenario-tab-num">{s.id}</span>
+                    <span className="scenario-tab-title">{s.title}</span>
+                  </button>
+                ))}
+              </div>
+
+              <button
+                className="scenario-arrow scenario-arrow-right"
+                disabled={activeScenario === scenarios.length - 1}
+                onClick={() => setActiveScenario(prev => Math.min(scenarios.length - 1, prev + 1))}
+                aria-label="Scénario suivant"
+              >
+                ›
+              </button>
+            </div>
+          )}
+
+          {/* Active Scenario Detail */}
+          {scenarios.length > 0 && scenarios[activeScenario] && (
+            <div className="scenario-detail-card">
+              <div className="scenario-detail-header">
+                <span className="scenario-detail-badge">Scénario {scenarios[activeScenario].id}</span>
+                <h3 className="scenario-detail-title">{scenarios[activeScenario].title}</h3>
+              </div>
+              <div className="scenario-detail-body">
+                <div className="scenario-detail-row">
+                  <span className="scenario-detail-label">Angle créatif</span>
+                  <span className="scenario-detail-value">{scenarios[activeScenario].angle}</span>
+                </div>
+                <div className="scenario-detail-row">
+                  <span className="scenario-detail-label">Mood</span>
+                  <span className="scenario-detail-value">{scenarios[activeScenario].mood}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Visual Director Results — shown first */}
           {visuals.length > 0 && (
@@ -752,78 +828,88 @@ export default function App() {
             </div>
           )}
 
-          {/* Text remix results */}
-          <div className="export-bar" style={{ marginTop: visuals.length > 0 ? 40 : 0 }}>
-            <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)' }}>
-              Déclinaisons texte
-            </h2>
-          </div>
-
-          <div className="results-list">
-            {results.map((r, i) => (
-              <div className="remix-card" key={i}>
-                <div className="remix-header">
-                  <h3>{r.remix.format_label}</h3>
-                  <span className={`score-badge ${r.quality.score >= 7 ? 'score-high' : 'score-mid'}`}>
-                    {r.quality.score}/10
-                  </span>
+          {/* Text remix results — filtered by active scenario if scenarios exist */}
+          {(() => {
+            const activeResults = scenarioResults.length > 0 && scenarios.length > 0
+              ? (scenarioResults[activeScenario]?.results || [])
+              : results
+            return (
+              <>
+                <div className="export-bar" style={{ marginTop: visuals.length > 0 ? 40 : 0 }}>
+                  <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)' }}>
+                    Déclinaisons texte
+                    {scenarios.length > 0 && scenarios[activeScenario] && ` — ${scenarios[activeScenario].title}`}
+                  </h2>
                 </div>
-                <div className="remix-body">
-                  <div className="remix-specs">
-                    {r.remix.format_specs}
-                  </div>
 
-                  <div className="remix-section">
-                    <div className="section-label">Headline</div>
-                    <div className="headline-value">{r.remix.headline}</div>
-                  </div>
+                <div className="results-list">
+                  {activeResults.map((r, i) => (
+                    <div className="remix-card" key={i}>
+                      <div className="remix-header">
+                        <h3>{r.remix.format_label}</h3>
+                        <span className={`score-badge ${r.quality.score >= 7 ? 'score-high' : 'score-mid'}`}>
+                          {r.quality.score}/10
+                        </span>
+                      </div>
+                      <div className="remix-body">
+                        <div className="remix-specs">
+                          {r.remix.format_specs}
+                        </div>
 
-                  <div className="remix-section">
-                    <div className="section-label">Concept adapté</div>
-                    <div className="section-value">{r.remix.adapted_concept}</div>
-                  </div>
+                        <div className="remix-section">
+                          <div className="section-label">Headline</div>
+                          <div className="headline-value">{r.remix.headline}</div>
+                        </div>
 
-                  <details className="remix-details-section">
-                    <summary className="section-label">Narration détaillée</summary>
-                    <div className="section-value">{r.remix.narrative_description}</div>
-                  </details>
+                        <div className="remix-section">
+                          <div className="section-label">Concept adapté</div>
+                          <div className="section-value">{r.remix.adapted_concept}</div>
+                        </div>
 
-                  <details className="remix-details-section">
-                    <summary className="section-label">Notes de production</summary>
-                    <div className="section-value">{r.remix.production_notes}</div>
-                  </details>
+                        <details className="remix-details-section">
+                          <summary className="section-label">Narration détaillée</summary>
+                          <div className="section-value">{r.remix.narrative_description}</div>
+                        </details>
 
-                  <div className="remix-section">
-                    <div className="section-label">Tone check</div>
-                    <div className="section-value">{r.remix.tone_check}</div>
-                  </div>
+                        <details className="remix-details-section">
+                          <summary className="section-label">Notes de production</summary>
+                          <div className="section-value">{r.remix.production_notes}</div>
+                        </details>
 
-                  {(r.quality.strengths.length > 0 || r.quality.issues.length > 0) && (
-                    <div className="quality-notes">
-                      {r.quality.strengths.length > 0 && (
-                        <>
-                          <div className="qn-label">Points forts</div>
-                          <div className="qn-items">{r.quality.strengths.join(' · ')}</div>
-                        </>
-                      )}
-                      {r.quality.issues.length > 0 && (
-                        <>
-                          <div className="qn-label" style={{ color: 'var(--warning)', marginTop: 8 }}>Points d'attention</div>
-                          <div className="qn-items">{r.quality.issues.join(' · ')}</div>
-                        </>
-                      )}
-                      {r.quality.suggestion && (
-                        <>
-                          <div className="qn-label" style={{ color: 'var(--text-secondary)', marginTop: 8 }}>Suggestion</div>
-                          <div className="qn-items">{r.quality.suggestion}</div>
-                        </>
-                      )}
+                        <div className="remix-section">
+                          <div className="section-label">Tone check</div>
+                          <div className="section-value">{r.remix.tone_check}</div>
+                        </div>
+
+                        {(r.quality.strengths.length > 0 || r.quality.issues.length > 0) && (
+                          <div className="quality-notes">
+                            {r.quality.strengths.length > 0 && (
+                              <>
+                                <div className="qn-label">Points forts</div>
+                                <div className="qn-items">{r.quality.strengths.join(' · ')}</div>
+                              </>
+                            )}
+                            {r.quality.issues.length > 0 && (
+                              <>
+                                <div className="qn-label" style={{ color: 'var(--warning)', marginTop: 8 }}>Points d'attention</div>
+                                <div className="qn-items">{r.quality.issues.join(' · ')}</div>
+                              </>
+                            )}
+                            {r.quality.suggestion && (
+                              <>
+                                <div className="qn-label" style={{ color: 'var(--text-secondary)', marginTop: 8 }}>Suggestion</div>
+                                <div className="qn-items">{r.quality.suggestion}</div>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
+              </>
+            )
+          })()}
         </>
       )}
     </div>

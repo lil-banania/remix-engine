@@ -144,7 +144,7 @@ async def analyze(req: AnalyzeRequest):
 
 @app.post("/remix", response_model=RemixResponse)
 async def remix(req: RemixRequestBody):
-    """Run the full remix pipeline: analyze → plan → write → check [→ visual_direct]."""
+    """Run the full remix pipeline: analyze -> scenarios -> plan -> write -> check [-> visual_direct]."""
     from app.models.campaign import RemixRequest
 
     initial_state = GraphState(
@@ -204,9 +204,19 @@ async def remix_stream(req: RemixRequestBody):
                 if node_name == "analyze" and node_output.get("analysis"):
                     payload["analysis"] = node_output["analysis"].model_dump()
 
+                if node_name == "scenarios" and node_output.get("scenarios"):
+                    payload["scenarios"] = [
+                        s.model_dump() for s in node_output["scenarios"]
+                    ]
+
                 if node_name == "check" and node_output.get("results"):
                     payload["results"] = [
                         r.model_dump() for r in node_output["results"]
+                    ]
+
+                if node_name == "check" and node_output.get("scenario_results"):
+                    payload["scenario_results"] = [
+                        sr.model_dump() for sr in node_output["scenario_results"]
                     ]
 
                 if node_name == "visual_direct" and node_output.get("visuals"):
@@ -232,7 +242,7 @@ async def remix_stream(req: RemixRequestBody):
 
 @app.post("/visuals/generate")
 async def generate_visuals_standalone(req: VisualsRequest):
-    """Standalone visual generation — runs analyze + visual_direct only.
+    """Standalone visual generation -- runs analyze + visual_direct only.
 
     Use this to (re-)generate visuals separately from the text remix pipeline.
     """

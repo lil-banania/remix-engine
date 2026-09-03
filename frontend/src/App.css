@@ -871,7 +871,7 @@
 .visuals-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  gap: 16px;
 }
 
 .visual-card {
@@ -908,18 +908,25 @@
   color: var(--accent);
 }
 
+.visual-card-split {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0;
+  min-height: 0;
+}
 .visual-card-mockup {
   display: flex;
   justify-content: center;
+  align-items: start;
   padding: 0 16px 16px;
 }
-
-.visual-card-caption {
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--border);
+.visual-card-info {
+  padding: 0 20px 16px 4px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  justify-content: center;
+  min-width: 0;
 }
 .vi-headline {
   font-size: 15px;
@@ -1004,6 +1011,13 @@
   .visuals-grid {
     grid-template-columns: 1fr;
   }
+  .visual-card-split {
+    grid-template-columns: 1fr;
+  }
+  .visual-card-info {
+    padding: 12px 16px 16px;
+    border-top: 1px solid var(--border);
+  }
   .sb-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1024,4 +1038,165 @@
     grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
+  .scenario-carousel {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .scenario-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .scenario-tab {
+    flex: 1;
+    min-width: 0;
+  }
+  .scenario-detail-body {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* ─── Scenario Carousel ─── */
+
+.scenario-carousel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.scenario-arrow {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.scenario-arrow:hover:not(:disabled) {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.scenario-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.scenario-tabs {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.scenario-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+  font-family: var(--sans);
+}
+.scenario-tab:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+.scenario-tab.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.scenario-tab-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+.scenario-tab:not(.active) .scenario-tab-num {
+  background: var(--border);
+  color: var(--text-secondary);
+}
+.scenario-tab-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Scenario Detail Card */
+.scenario-detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+.scenario-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.scenario-detail-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  padding: 4px 10px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+.scenario-detail-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+.scenario-detail-body {
+  display: flex;
+  gap: 32px;
+}
+.scenario-detail-row {
+  flex: 1;
+}
+.scenario-detail-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.scenario-detail-value {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
