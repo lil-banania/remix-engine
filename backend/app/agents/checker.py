@@ -7,7 +7,7 @@ import os
 
 from langchain_anthropic import ChatAnthropic
 
-MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
+MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5")
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.models.campaign import QualityVerdict, RemixOutput, RemixResult
