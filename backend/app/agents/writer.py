@@ -38,7 +38,7 @@ Respond in the same language as the campaign analysis.
 def get_llm() -> ChatAnthropic:
     return ChatAnthropic(
         model=MODEL,
-        max_tokens=2000,
+        max_tokens=4096,
     )
 
 
