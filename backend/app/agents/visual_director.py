@@ -172,7 +172,10 @@ async def generate_visuals(state: GraphState) -> dict:
 
     This is the main LangGraph node function.
     """
+    print("[visual_director] === Starting visual generation ===")
+
     if not state.analysis:
+        print("[visual_director] ERROR: Missing campaign analysis")
         return {"error": "Missing campaign analysis"}
 
     # Determine which visual formats to generate
@@ -181,20 +184,26 @@ async def generate_visuals(state: GraphState) -> dict:
         # Default: generate all 4 if no specific request
         visual_formats = list(VisualFormat)
 
+    print(f"[visual_director] Formats requested: {[f.value for f in visual_formats]}")
+
     brand = state.analysis.brand
     concept = state.analysis.creative_concept
     analysis_text = state.analysis.model_dump_json(indent=2)
 
     # Step 1: Generate creative briefs via Claude
+    print(f"[visual_director] Generating briefs via {MODEL}...")
     try:
         briefs_data = await _generate_briefs(
             concept, brand, analysis_text, visual_formats,
         )
+        print(f"[visual_director] Briefs generated OK — keys: {list(briefs_data.keys())}")
     except Exception as e:
+        print(f"[visual_director] ERROR: Brief generation failed: {e}")
         return {"error": f"Brief generation failed: {e}"}
 
     # Step 2: Generate images via Nano Banana
     gemini_client = _get_gemini_client()
+    print(f"[visual_director] Gemini client: {'OK' if gemini_client else 'NONE (no GEMINI_API_KEY)'}")
     outputs: list[VisualOutput] = []
 
     for fmt in visual_formats:
@@ -247,6 +256,10 @@ async def generate_visuals(state: GraphState) -> dict:
                 image_b64=img,
                 storyboard_frames=None,
             ))
+
+    print(f"[visual_director] === Done — {len(outputs)} visuals generated ===")
+    for o in outputs:
+        print(f"  [{o.format.value}] headline={o.headline[:40]}... has_image={o.has_image()}")
 
     return {
         "visuals": outputs,

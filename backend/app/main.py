@@ -73,6 +73,7 @@ class RemixRequestBody(BaseModel):
 class RemixResponse(BaseModel):
     analysis: CampaignAnalysis
     results: list[RemixResult]
+    visuals: list[dict] = Field(default_factory=list)
 
 
 class FormatInfo(BaseModel):
@@ -162,9 +163,11 @@ async def remix(req: RemixRequestBody):
     if final_state.get("error"):
         raise HTTPException(500, final_state["error"])
 
+    visuals = final_state.get("visuals", [])
     return RemixResponse(
         analysis=final_state["analysis"],
         results=final_state["results"],
+        visuals=[v.to_api_dict() for v in visuals] if visuals else [],
     )
 
 
@@ -194,6 +197,10 @@ async def remix_stream(req: RemixRequestBody):
                 # Build a serializable payload
                 payload = {"step": step, "node": node_name}
 
+                # Forward errors from any node
+                if node_output.get("error"):
+                    payload["error"] = node_output["error"]
+
                 if node_name == "analyze" and node_output.get("analysis"):
                     payload["analysis"] = node_output["analysis"].model_dump()
 
@@ -203,9 +210,15 @@ async def remix_stream(req: RemixRequestBody):
                     ]
 
                 if node_name == "visual_direct" and node_output.get("visuals"):
-                    payload["visuals"] = [
-                        v.to_api_dict() for v in node_output["visuals"]
-                    ]
+                    try:
+                        visuals_list = node_output["visuals"]
+                        payload["visuals"] = [
+                            v.to_api_dict() if hasattr(v, "to_api_dict") else v
+                            for v in visuals_list
+                        ]
+                    except Exception as e:
+                        print(f"[SSE] Error serializing visuals: {e}")
+                        payload["error"] = f"Visual serialization failed: {e}"
 
                 yield {
                     "event": "progress",
