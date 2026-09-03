@@ -371,7 +371,626 @@
   margin-bottom: 0;
 }
 
+/* ===== Visual Director — Phone frame ===== */
+.vm-phone {
+  width: 280px;
+  height: 600px;
+  background: #000;
+  border-radius: 32px;
+  padding: 6px;
+  position: relative;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+  flex-shrink: 0;
+}
+.vm-notch {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90px;
+  height: 28px;
+  background: #000;
+  border-radius: 0 0 16px 16px;
+  z-index: 20;
+}
+.vm-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+.vm-bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.vm-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  color: #555;
+  font-size: 14px;
+  font-family: var(--mono);
+}
+.vm-placeholder-sm {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  color: #555;
+  font-size: 20px;
+}
+
+/* ===== TikTok UI chrome ===== */
+.tt-top {
+  position: absolute;
+  top: 36px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  z-index: 10;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+.tt-top span {
+  opacity: 0.5;
+}
+.tt-top span.active {
+  opacity: 1;
+  border-bottom: 2px solid #fff;
+  padding-bottom: 4px;
+}
+
+.tt-actions {
+  position: absolute;
+  right: 10px;
+  bottom: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  z-index: 10;
+}
+.tt-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff6b35, #ff3366);
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 6px;
+  position: relative;
+}
+.tt-avatar-plus {
+  position: absolute;
+  bottom: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fe2c55;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+  font-weight: 700;
+}
+.tt-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.tt-action svg {
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+}
+.tt-action span {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.tt-disc {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: conic-gradient(#333, #555, #333);
+  border: 6px solid #222;
+  animation: spin-disc 3s linear infinite;
+}
+@keyframes spin-disc {
+  to { transform: rotate(360deg); }
+}
+
+.tt-bottom {
+  position: absolute;
+  bottom: 42px;
+  left: 0;
+  right: 0;
+  padding: 0 12px 14px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  z-index: 10;
+}
+.tt-username {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 5px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.tt-desc {
+  font-size: 11px;
+  line-height: 1.4;
+  color: #fff;
+  margin-bottom: 8px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tt-sound {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.8);
+}
+.tt-sound-icon {
+  font-size: 12px;
+}
+.tt-marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  max-width: 160px;
+}
+.tt-marquee span {
+  display: inline-block;
+  animation: marquee 8s linear infinite;
+}
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.tt-progress {
+  position: absolute;
+  bottom: 42px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.15);
+  z-index: 15;
+}
+.tt-progress-fill {
+  height: 100%;
+  width: 35%;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.tt-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 42px;
+  background: rgba(0,0,0,0.95);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-radius: 0 0 26px 26px;
+  z-index: 15;
+}
+.tt-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  font-size: 8px;
+  color: rgba(255,255,255,0.5);
+}
+.tt-nav-item.active {
+  color: #fff;
+}
+.tt-nav-item svg {
+  width: 20px;
+  height: 20px;
+}
+.tt-create-btn {
+  width: 36px;
+  height: 22px;
+  background: linear-gradient(90deg, #25f4ee, #fe2c55);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tt-create-inner {
+  width: 28px;
+  height: 18px;
+  background: #fff;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #000;
+}
+
+/* ===== Instagram Story UI chrome ===== */
+.ig-progress {
+  position: absolute;
+  top: 34px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  gap: 3px;
+  z-index: 10;
+}
+.ig-seg {
+  flex: 1;
+  height: 2px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.ig-seg.done {
+  background: rgba(255,255,255,0.9);
+}
+.ig-seg.current .ig-seg-fill {
+  height: 100%;
+  width: 65%;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.ig-header {
+  position: absolute;
+  top: 44px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10;
+}
+.ig-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  padding: 2px;
+}
+.ig-avatar-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+.ig-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.ig-time {
+  font-size: 11px;
+  color: rgba(255,255,255,0.6);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.ig-more {
+  margin-left: auto;
+  font-size: 18px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.ig-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40px 16px 16px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6));
+  z-index: 10;
+  text-align: center;
+}
+.ig-headline {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #fff;
+  margin-bottom: 10px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.ig-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.3);
+  padding: 6px 16px;
+  border-radius: 20px;
+  margin-bottom: 12px;
+}
+.ig-reply-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ig-reply-input {
+  flex: 1;
+  height: 36px;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  padding: 0 14px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  background: transparent;
+  display: flex;
+  align-items: center;
+}
+.ig-reply-icons {
+  display: flex;
+  gap: 12px;
+}
+.ig-reply-icons svg {
+  opacity: 0.8;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+}
+
+/* ===== Print poster ===== */
+.print-poster {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 3 / 4;
+  margin: 0 auto;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px var(--border);
+}
+.print-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.print-logo {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.print-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 60px 28px 28px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+}
+.print-headline {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.print-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.4;
+}
+
+/* ===== Storyboard ===== */
+.sb-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.sb-frame {
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.sb-img-wrap {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  position: relative;
+  background: #1a1a2e;
+}
+.sb-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.sb-num {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+.sb-caption {
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* ===== Visual Director cards ===== */
+.visuals-section {
+  margin-top: 32px;
+}
+.visuals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.visual-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.visual-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border);
+}
+.visual-card-header h3 {
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 700;
+}
+.visual-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.visual-card-body {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 32px;
+  padding: 24px;
+  align-items: start;
+}
+.visual-mockup-col {
+  display: flex;
+  justify-content: center;
+}
+.visual-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+.visual-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vi-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.vi-headline {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text);
+}
+.vi-value {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.visual-prompt-details {
+  margin-top: 4px;
+}
+.visual-prompt-details summary {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.visual-prompt-details summary:hover {
+  color: var(--accent);
+}
+.visual-prompt-details p {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  background: var(--bg-input);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+}
+
+.visual-chip {
+  border-color: var(--border);
+}
+.visual-chip.selected {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
 /* ===== Responsive ===== */
+@media (max-width: 900px) {
+  .visual-card-body {
+    grid-template-columns: 1fr;
+  }
+  .visual-mockup-col {
+    justify-content: center;
+  }
+  .sb-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 600px) {
   .app { padding: 24px 16px 60px; }
   .header h1 { font-size: 36px; }
@@ -379,4 +998,12 @@
   .formats-grid { grid-template-columns: 1fr; }
   .optional-fields { grid-template-columns: 1fr; }
   .remix-body { padding: 16px; }
+  .vm-phone {
+    width: 240px;
+    height: 516px;
+  }
+  .sb-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
 }

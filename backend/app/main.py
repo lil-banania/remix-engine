@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import json
+import os
 import asyncio
 from typing import Optional
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -17,19 +19,27 @@ from app.models.campaign import (
     RemixFormat,
     RemixResult,
 )
+from app.models.visuals import VisualFormat, VisualOutput, VISUAL_FORMAT_SPECS
 from app.models.state import GraphState
 from app.graph import remix_graph
 
+load_dotenv()
 
 app = FastAPI(
     title="Remix Engine",
     description="Feed it a campaign. Get it everywhere.",
-    version="1.0.0",
+    version="1.1.0",
 )
+
+# CORS: allow frontend origin (Vercel in prod, localhost in dev)
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:5173,http://localhost:3000"
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,6 +64,10 @@ class RemixRequestBody(BaseModel):
     formats: list[RemixFormat] = Field(min_length=1, max_length=5)
     target_audience: Optional[str] = None
     target_market: Optional[str] = None
+    visual_formats: list[VisualFormat] = Field(
+        default_factory=list,
+        description="Visual formats to generate (empty = skip visuals)",
+    )
 
 
 class RemixResponse(BaseModel):
@@ -69,6 +83,19 @@ class FormatInfo(BaseModel):
     constraints: str
 
 
+class VisualFormatInfo(BaseModel):
+    key: str
+    label: str
+    aspect_ratio: str
+    description: str
+
+
+class VisualsRequest(BaseModel):
+    """Standalone request to generate visuals for an existing remix."""
+    campaign_brief: str = Field(min_length=50)
+    visual_formats: list[VisualFormat] = Field(min_length=1, max_length=4)
+
+
 # --- Routes ---
 
 @app.get("/")
@@ -76,7 +103,8 @@ async def root():
     return {
         "name": "Remix Engine",
         "tagline": "Feed it a campaign. Get it everywhere.",
-        "version": "1.0.0",
+        "version": "1.1.0",
+        "features": ["remix", "visual_director"],
     }
 
 
@@ -86,6 +114,15 @@ async def list_formats():
     return [
         FormatInfo(key=fmt.value, **specs)
         for fmt, specs in FORMAT_SPECS.items()
+    ]
+
+
+@app.get("/visual-formats", response_model=list[VisualFormatInfo])
+async def list_visual_formats():
+    """List available visual generation formats."""
+    return [
+        VisualFormatInfo(key=fmt.value, **specs)
+        for fmt, specs in VISUAL_FORMAT_SPECS.items()
     ]
 
 
@@ -106,7 +143,7 @@ async def analyze(req: AnalyzeRequest):
 
 @app.post("/remix", response_model=RemixResponse)
 async def remix(req: RemixRequestBody):
-    """Run the full remix pipeline: analyze → plan → write → check."""
+    """Run the full remix pipeline: analyze → plan → write → check [→ visual_direct]."""
     from app.models.campaign import RemixRequest
 
     initial_state = GraphState(
@@ -116,6 +153,7 @@ async def remix(req: RemixRequestBody):
             target_audience=req.target_audience,
             target_market=req.target_market,
         ),
+        visual_formats=req.visual_formats,
     )
 
     # Run the full graph
@@ -142,6 +180,7 @@ async def remix_stream(req: RemixRequestBody):
             target_audience=req.target_audience,
             target_market=req.target_market,
         ),
+        visual_formats=req.visual_formats,
     )
 
     async def event_generator():
@@ -163,6 +202,11 @@ async def remix_stream(req: RemixRequestBody):
                         r.model_dump() for r in node_output["results"]
                     ]
 
+                if node_name == "visual_direct" and node_output.get("visuals"):
+                    payload["visuals"] = [
+                        v.to_api_dict() for v in node_output["visuals"]
+                    ]
+
                 yield {
                     "event": "progress",
                     "data": json.dumps(payload, default=str),
@@ -171,3 +215,37 @@ async def remix_stream(req: RemixRequestBody):
         yield {"event": "done", "data": "{}"}
 
     return EventSourceResponse(event_generator())
+
+
+@app.post("/visuals/generate")
+async def generate_visuals_standalone(req: VisualsRequest):
+    """Standalone visual generation — runs analyze + visual_direct only.
+
+    Use this to (re-)generate visuals separately from the text remix pipeline.
+    """
+    from app.agents.analyzer import analyze_campaign
+    from app.agents.visual_director import generate_visuals
+
+    state = GraphState(
+        campaign_brief=req.campaign_brief,
+        visual_formats=req.visual_formats,
+    )
+
+    # Step 1: Analyze
+    analysis_result = await analyze_campaign(state)
+    if not analysis_result.get("analysis"):
+        raise HTTPException(500, "Failed to analyze campaign")
+
+    state.analysis = analysis_result["analysis"]
+
+    # Step 2: Generate visuals
+    visuals_result = await generate_visuals(state)
+    if visuals_result.get("error"):
+        raise HTTPException(500, visuals_result["error"])
+
+    visuals = visuals_result.get("visuals", [])
+
+    return {
+        "analysis": state.analysis.model_dump(),
+        "visuals": [v.to_api_dict() for v in visuals],
+    }

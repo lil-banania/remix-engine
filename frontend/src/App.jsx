@@ -16,11 +16,19 @@ const FORMATS = [
   { key: 'linkedin_b2b', label: 'LinkedIn B2B', detail: '1:1 or 4:5' },
 ]
 
+const VISUAL_FORMATS = [
+  { key: 'tiktok', label: 'TikTok / Reels', detail: '9:16 · Vertical' },
+  { key: 'story', label: 'Instagram Story', detail: '9:16 · Vertical' },
+  { key: 'print', label: 'Affiche / Print', detail: '3:4 · Poster' },
+  { key: 'storyboard', label: 'Storyboard', detail: '16:9 · 4 frames' },
+]
+
 const PIPELINE_STEPS = [
   { key: 'analyze', label: 'Analyse de la campagne' },
   { key: 'plan', label: 'Planification des remixes' },
   { key: 'write', label: 'Génération créative' },
   { key: 'check', label: 'Contrôle qualité' },
+  { key: 'visual_direct', label: 'Direction visuelle' },
 ]
 
 const SAMPLE_BRIEF = `Client : Intermarché
@@ -36,15 +44,238 @@ Ton : Cinématographique, émouvant, authentique. Réalisation signée par un r�
 
 Signature : "Intermarché — Producteur de beau et de bon depuis 1969"`
 
+
+// ─── Visual mockup components ───
+
+function TikTokMockup({ visual }) {
+  const imgSrc = visual.image_b64
+    ? `data:image/png;base64,${visual.image_b64}`
+    : null
+
+  return (
+    <div className="vm-phone">
+      <div className="vm-notch" />
+      <div className="vm-screen">
+        {imgSrc && <img className="vm-bg" src={imgSrc} alt="" />}
+        {!imgSrc && <div className="vm-placeholder">Image non générée</div>}
+
+        {/* TikTok top tabs */}
+        <div className="tt-top">
+          <span>Following</span>
+          <span>Friends</span>
+          <span className="active">For You</span>
+        </div>
+
+        {/* Right actions */}
+        <div className="tt-actions">
+          <div className="tt-avatar">
+            {(visual.format_label || 'T')[0]}
+            <div className="tt-avatar-plus">+</div>
+          </div>
+          <div className="tt-action">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <span>24.3K</span>
+          </div>
+          <div className="tt-action">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>1,847</span>
+          </div>
+          <div className="tt-action">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="white"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z" transform="rotate(-30 12 12)"/></svg>
+            <span>Share</span>
+          </div>
+          <div className="tt-action">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>
+            <span>Save</span>
+          </div>
+          <div className="tt-disc" />
+        </div>
+
+        {/* Bottom info */}
+        <div className="tt-bottom">
+          <div className="tt-username">@brand_officiel</div>
+          <div className="tt-desc">{visual.headline} {visual.subline}</div>
+          <div className="tt-sound">
+            <span className="tt-sound-icon">♫</span>
+            <div className="tt-marquee">
+              <span>Son original — Brand&nbsp;&nbsp;&nbsp;&nbsp;Son original — Brand</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress */}
+        <div className="tt-progress"><div className="tt-progress-fill" /></div>
+
+        {/* Nav */}
+        <div className="tt-nav">
+          <div className="tt-nav-item active">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          </div>
+          <div className="tt-nav-item">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </div>
+          <div className="tt-nav-item">
+            <div className="tt-create-btn"><div className="tt-create-inner">+</div></div>
+          </div>
+          <div className="tt-nav-item">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+          </div>
+          <div className="tt-nav-item">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StoryMockup({ visual }) {
+  const imgSrc = visual.image_b64
+    ? `data:image/png;base64,${visual.image_b64}`
+    : null
+
+  return (
+    <div className="vm-phone">
+      <div className="vm-notch" />
+      <div className="vm-screen">
+        {imgSrc && <img className="vm-bg" src={imgSrc} alt="" />}
+        {!imgSrc && <div className="vm-placeholder">Image non générée</div>}
+
+        {/* Progress bars */}
+        <div className="ig-progress">
+          <div className="ig-seg done" />
+          <div className="ig-seg current"><div className="ig-seg-fill" /></div>
+          <div className="ig-seg" />
+        </div>
+
+        {/* Header */}
+        <div className="ig-header">
+          <div className="ig-avatar"><div className="ig-avatar-inner">T</div></div>
+          <div>
+            <div className="ig-name">brand_officiel</div>
+            <div className="ig-time">Il y a 2h</div>
+          </div>
+          <div className="ig-more">···</div>
+        </div>
+
+        {/* Bottom */}
+        <div className="ig-bottom">
+          <div className="ig-headline">{visual.headline}</div>
+          <div className="ig-cta">
+            <span>↑</span> {visual.subline}
+          </div>
+          <div className="ig-reply-bar">
+            <div className="ig-reply-input">Envoyer un message...</div>
+            <div className="ig-reply-icons">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PrintMockup({ visual }) {
+  const imgSrc = visual.image_b64
+    ? `data:image/png;base64,${visual.image_b64}`
+    : null
+
+  return (
+    <div className="print-poster">
+      {imgSrc && <img src={imgSrc} alt="" />}
+      {!imgSrc && <div className="vm-placeholder" style={{ aspectRatio: '3/4' }}>Image non générée</div>}
+      <div className="print-logo">BRAND</div>
+      <div className="print-overlay">
+        <div className="print-headline">{visual.headline}</div>
+        <div className="print-sub">{visual.subline}</div>
+      </div>
+    </div>
+  )
+}
+
+function StoryboardMockup({ visual }) {
+  const frames = visual.storyboard_frames || []
+
+  return (
+    <div className="sb-grid">
+      {frames.map((frame, i) => {
+        const imgSrc = frame.image_b64
+          ? `data:image/png;base64,${frame.image_b64}`
+          : null
+        return (
+          <div className="sb-frame" key={i}>
+            <div className="sb-img-wrap">
+              <div className="sb-num">{i + 1}</div>
+              {imgSrc && <img src={imgSrc} alt={`Frame ${i + 1}`} />}
+              {!imgSrc && <div className="vm-placeholder-sm">—</div>}
+            </div>
+            <div className="sb-caption">{frame.caption}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function VisualCard({ visual }) {
+  const MockupComponent = {
+    tiktok: TikTokMockup,
+    story: StoryMockup,
+    print: PrintMockup,
+    storyboard: StoryboardMockup,
+  }[visual.format] || null
+
+  return (
+    <div className="visual-card">
+      <div className="visual-card-header">
+        <h3>{visual.format_label}</h3>
+        {visual.has_image && <span className="visual-badge">Image IA</span>}
+      </div>
+      <div className="visual-card-body">
+        <div className="visual-mockup-col">
+          {MockupComponent && <MockupComponent visual={visual} />}
+        </div>
+        <div className="visual-info-col">
+          <div className="visual-info-item">
+            <div className="vi-label">Headline</div>
+            <div className="vi-headline">{visual.headline}</div>
+          </div>
+          {visual.subline && (
+            <div className="visual-info-item">
+              <div className="vi-label">Subline / CTA</div>
+              <div className="vi-value">{visual.subline}</div>
+            </div>
+          )}
+          <div className="visual-info-item">
+            <div className="vi-label">Direction artistique</div>
+            <div className="vi-value">{visual.art_direction}</div>
+          </div>
+          {visual.image_prompt && (
+            <details className="visual-prompt-details">
+              <summary>Prompt image</summary>
+              <p>{visual.image_prompt}</p>
+            </details>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 export default function App() {
   // --- State ---
   const [step, setStep] = useState('input') // input | formats | loading | results
   const [brief, setBrief] = useState('')
   const [selectedFormats, setSelectedFormats] = useState([])
+  const [selectedVisualFormats, setSelectedVisualFormats] = useState([])
   const [audience, setAudience] = useState('')
   const [market, setMarket] = useState('')
   const [analysis, setAnalysis] = useState(null)
   const [results, setResults] = useState([])
+  const [visuals, setVisuals] = useState([])
   const [loadingStep, setLoadingStep] = useState('')
   const [completedSteps, setCompletedSteps] = useState([])
   const [error, setError] = useState('')
@@ -57,6 +288,14 @@ export default function App() {
         : prev.length < 5
           ? [...prev, key]
           : prev
+    )
+  }
+
+  const toggleVisualFormat = (key) => {
+    setSelectedVisualFormats(prev =>
+      prev.includes(key)
+        ? prev.filter(k => k !== key)
+        : [...prev, key]
     )
   }
 
@@ -92,11 +331,17 @@ export default function App() {
   const runRemix = useCallback(async () => {
     setError('')
     setStep('loading')
-    setCompletedSteps(['analyze', 'plan'])
-    setLoadingStep('write')
+    setCompletedSteps([])
+    setLoadingStep('analyze')
+    setVisuals([])
+
+    // Filter pipeline steps based on whether visuals are requested
+    const activeSteps = selectedVisualFormats.length > 0
+      ? PIPELINE_STEPS
+      : PIPELINE_STEPS.filter(s => s.key !== 'visual_direct')
 
     try {
-      const res = await fetch(`${API_URL}/remix`, {
+      const res = await fetch(`${API_URL}/remix/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,6 +349,7 @@ export default function App() {
           formats: selectedFormats,
           target_audience: audience || null,
           target_market: market || null,
+          visual_formats: selectedVisualFormats,
         }),
       })
 
@@ -112,19 +358,100 @@ export default function App() {
         throw new Error(err.detail || 'Erreur lors de la génération')
       }
 
-      setCompletedSteps(prev => [...prev, 'write'])
-      setLoadingStep('check')
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let finalAnalysis = null
+      let finalResults = []
+      let finalVisuals = []
 
-      const data = await res.json()
-      setAnalysis(data.analysis)
-      setResults(data.results)
-      setCompletedSteps(['analyze', 'plan', 'write', 'check'])
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (line.startsWith('event: done')) {
+            const allKeys = activeSteps.map(s => s.key)
+            setCompletedSteps(allKeys)
+            continue
+          }
+          if (!line.startsWith('data: ')) continue
+
+          try {
+            const payload = JSON.parse(line.slice(6))
+            const node = payload.node || payload.step
+
+            if (node === 'analyze') {
+              setLoadingStep('analyze')
+              if (payload.analysis) {
+                finalAnalysis = payload.analysis
+                setCompletedSteps(prev => [...new Set([...prev, 'analyze'])])
+                setLoadingStep('plan')
+              }
+            } else if (node === 'plan') {
+              setCompletedSteps(prev => [...new Set([...prev, 'plan'])])
+              setLoadingStep('write')
+            } else if (node === 'write') {
+              setCompletedSteps(prev => [...new Set([...prev, 'write'])])
+              setLoadingStep('check')
+            } else if (node === 'check') {
+              if (payload.results) finalResults = payload.results
+              setCompletedSteps(prev => [...new Set([...prev, 'check'])])
+              if (selectedVisualFormats.length > 0) {
+                setLoadingStep('visual_direct')
+              }
+            } else if (node === 'visual_direct') {
+              if (payload.visuals) finalVisuals = payload.visuals
+              setCompletedSteps(prev => [...new Set([...prev, 'visual_direct'])])
+            }
+          } catch (e) {
+            // ignore malformed SSE lines
+          }
+        }
+      }
+
+      if (finalAnalysis) setAnalysis(finalAnalysis)
+      if (finalResults.length) setResults(finalResults)
+      if (finalVisuals.length) setVisuals(finalVisuals)
       setStep('results')
     } catch (err) {
       setError(err.message)
       setStep('formats')
     }
-  }, [brief, selectedFormats, audience, market])
+  }, [brief, selectedFormats, selectedVisualFormats, audience, market])
+
+  // --- Regenerate visuals only ---
+  const regenerateVisuals = useCallback(async () => {
+    if (!brief || selectedVisualFormats.length === 0) return
+
+    setError('')
+    setVisuals([])
+
+    try {
+      const res = await fetch(`${API_URL}/visuals/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campaign_brief: brief,
+          visual_formats: selectedVisualFormats,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.detail || 'Erreur lors de la génération visuelle')
+      }
+
+      const data = await res.json()
+      if (data.visuals) setVisuals(data.visuals)
+    } catch (err) {
+      setError(err.message)
+    }
+  }, [brief, selectedVisualFormats])
 
   // --- Export Markdown ---
   const exportMarkdown = useCallback(() => {
@@ -169,14 +496,21 @@ export default function App() {
     setStep('input')
     setBrief('')
     setSelectedFormats([])
+    setSelectedVisualFormats([])
     setAudience('')
     setMarket('')
     setAnalysis(null)
     setResults([])
+    setVisuals([])
     setLoadingStep('')
     setCompletedSteps([])
     setError('')
   }
+
+  // --- Active pipeline steps (filter out visual_direct if not selected) ---
+  const activeSteps = selectedVisualFormats.length > 0
+    ? PIPELINE_STEPS
+    : PIPELINE_STEPS.filter(s => s.key !== 'visual_direct')
 
   // --- Step indicators ---
   const stepIndex = { input: 0, formats: 1, loading: 2, results: 3 }
@@ -271,8 +605,8 @@ export default function App() {
             </div>
           </div>
 
-          <div className="card">
-            <h2>02 — Choisir les formats ({selectedFormats.length}/5)</h2>
+          <div className="card" style={{ marginBottom: 24 }}>
+            <h2>02 — Choisir les formats texte ({selectedFormats.length}/5)</h2>
             <div className="formats-grid">
               {FORMATS.map(f => (
                 <div
@@ -307,7 +641,29 @@ export default function App() {
                 />
               </div>
             </div>
+          </div>
 
+          {/* Visual format selector */}
+          <div className="card" style={{ marginBottom: 24 }}>
+            <h2>03 — Visuels IA (optionnel)</h2>
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
+              Génère des mockups visuels avec Nano Banana pour chaque format sélectionné.
+            </p>
+            <div className="formats-grid">
+              {VISUAL_FORMATS.map(f => (
+                <div
+                  key={f.key}
+                  className={`format-chip visual-chip ${selectedVisualFormats.includes(f.key) ? 'selected' : ''}`}
+                  onClick={() => toggleVisualFormat(f.key)}
+                >
+                  <span className="chip-label">{f.label}</span>
+                  <span className="chip-detail">{f.detail}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="card">
             <div className="btn-row">
               <button
                 className="btn btn-primary"
@@ -315,6 +671,7 @@ export default function App() {
                 onClick={runRemix}
               >
                 Générer {selectedFormats.length} déclinaison{selectedFormats.length > 1 ? 's' : ''}
+                {selectedVisualFormats.length > 0 && ` + ${selectedVisualFormats.length} visuel${selectedVisualFormats.length > 1 ? 's' : ''}`}
               </button>
               <button className="btn btn-secondary" onClick={() => setStep('input')}>
                 Retour
@@ -330,7 +687,7 @@ export default function App() {
           <div className="loading-container">
             <div className="spinner" />
             <div className="loading-steps-list">
-              {PIPELINE_STEPS.map(s => (
+              {activeSteps.map(s => (
                 <div
                   key={s.key}
                   className={`loading-step-item ${
@@ -428,6 +785,51 @@ export default function App() {
               </div>
             ))}
           </div>
+
+          {/* Visual Director Results */}
+          {visuals.length > 0 && (
+            <div className="visuals-section">
+              <div className="export-bar" style={{ marginTop: 48 }}>
+                <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--accent)' }}>
+                  Visual Director — {visuals.length} format{visuals.length > 1 ? 's' : ''}
+                </h2>
+                <button className="btn btn-secondary" onClick={regenerateVisuals}>
+                  Re-générer les visuels
+                </button>
+              </div>
+              <div className="visuals-list">
+                {visuals.map((v, i) => (
+                  <VisualCard key={i} visual={v} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Standalone visual generation button when no visuals were requested */}
+          {visuals.length === 0 && selectedVisualFormats.length === 0 && (
+            <div className="card" style={{ marginTop: 32, textAlign: 'center' }}>
+              <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
+                Ajouter des visuels IA à ce remix ?
+              </p>
+              <div className="formats-grid" style={{ marginBottom: 16 }}>
+                {VISUAL_FORMATS.map(f => (
+                  <div
+                    key={f.key}
+                    className={`format-chip visual-chip ${selectedVisualFormats.includes(f.key) ? 'selected' : ''}`}
+                    onClick={() => toggleVisualFormat(f.key)}
+                  >
+                    <span className="chip-label">{f.label}</span>
+                    <span className="chip-detail">{f.detail}</span>
+                  </div>
+                ))}
+              </div>
+              {selectedVisualFormats.length > 0 && (
+                <button className="btn btn-primary" onClick={regenerateVisuals}>
+                  Générer {selectedVisualFormats.length} visuel{selectedVisualFormats.length > 1 ? 's' : ''}
+                </button>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

@@ -14,6 +14,7 @@ from app.models.campaign import (
     RemixResult,
     RemixRequest,
 )
+from app.models.visuals import VisualFormat, VisualOutput
 
 
 class GraphState(BaseModel):
@@ -34,6 +35,10 @@ class GraphState(BaseModel):
 
     # --- Quality Checker output ---
     results: list[RemixResult] = Field(default_factory=list)
+
+    # --- Visual Director ---
+    visual_formats: list[VisualFormat] = Field(default_factory=list)
+    visuals: list[VisualOutput] = Field(default_factory=list)
 
     # --- Control flow ---
     current_step: str = Field(default="input")
