@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import os
 
 from langchain_anthropic import ChatAnthropic
+
+MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-5-sonnet-20241022")
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from app.models.campaign import QualityVerdict, RemixOutput, RemixResult
@@ -39,7 +42,7 @@ Respond in the same language as the remix.
 
 def get_llm() -> ChatAnthropic:
     return ChatAnthropic(
-        model="claude-sonnet-4-20250514",
+        model=MODEL,
         temperature=0.2,
         max_tokens=1500,
     )
