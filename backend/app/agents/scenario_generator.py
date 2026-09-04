@@ -58,10 +58,28 @@ Generate 3 distinct creative scenarios for this campaign.
 Each must offer a genuinely different creative direction while staying true to the brand."""
 
     try:
-        result = await llm.ainvoke([
-            SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=prompt),
-        ])
+        try:
+            result = await llm.ainvoke([
+                SystemMessage(content=SYSTEM_PROMPT),
+                HumanMessage(content=prompt),
+            ])
+        except Exception as parse_err:
+            # Structured output may fail if the LLM returns raw JSON string
+            # instead of a parsed object — fall through to manual parsing
+            print(f"[scenario_generator] Structured output failed: {parse_err}")
+            print("[scenario_generator] Falling back to raw JSON parsing...")
+            raw_llm = get_llm()
+            raw_result = await raw_llm.ainvoke([
+                SystemMessage(content=SYSTEM_PROMPT),
+                HumanMessage(content=prompt + "\n\nRespond with valid JSON matching this schema: {\"scenarios\": [{\"id\": 1, \"title\": \"...\", \"angle\": \"...\", \"mood\": \"...\"}]}"),
+            ])
+            raw_text = raw_result.content if hasattr(raw_result, 'content') else str(raw_result)
+            if isinstance(raw_text, list):
+                raw_text = raw_text[0].text if hasattr(raw_text[0], "text") else str(raw_text[0])
+            json_start = raw_text.find('{')
+            json_end = raw_text.rfind('}') + 1
+            parsed = json.loads(raw_text[json_start:json_end])
+            result = ScenarioSet(**parsed)
 
         # Handle case where structured output returns a string instead of parsed object
         if isinstance(result, str):

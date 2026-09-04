@@ -47,7 +47,8 @@ const PIPELINE_STEPS = [
   { key: 'visual_direct', label: 'Visuels' },
 ]
 
-const SAMPLE_BRIEF = `Client : Intermarché
+const SAMPLE_BRIEFS = [
+  `Client : Intermarché
 Campagne : "L'Amour L'Amour" (2017)
 
 Insight consommateur : Les gens associent la grande distribution au prix et aux promos, jamais à l'émotion. Pourtant, la cuisine est un acte d'amour — on cuisine pour ceux qu'on aime.
@@ -58,7 +59,34 @@ Exécutions existantes : Film TV 3min, cut 60s et 30s, affichage print, activati
 
 Ton : Cinématographique, émouvant, authentique. Réalisation signée par un réalisateur de cinéma. Pas de voix off, pas de pack shot agressif. La marque est présente mais jamais intrusive.
 
-Signature : "Intermarché — Producteur de beau et de bon depuis 1969"`
+Signature : "Intermarché — Producteur de beau et de bon depuis 1969"`,
+
+  `Client : Volvo
+Campagne : "The Epic Split" (2013)
+
+Insight consommateur : Les professionnels du transport considèrent la stabilité et la précision de la direction comme les critères les plus importants d'un camion, mais les démos techniques les ennuient.
+
+Concept créatif : Jean-Claude Van Damme réalise un grand écart entre deux camions Volvo roulant en marche arrière, démontrant la précision du système de direction dynamique Volvo. La prouesse physique spectaculaire rend tangible une promesse technique abstraite.
+
+Exécutions existantes : Film digital 90s (YouTube), behind-the-scenes, campagne social media "Live Test Series" (6 films au total).
+
+Ton : Épique, zen, cinématographique. Musique d'Enya, lumière de golden hour, aucun texte à l'écran pendant la performance. Le silence et l'espace font le contraste avec l'exploit.
+
+Signature : "Volvo Trucks — Live Test Series"`,
+
+  `Client : Burger King France
+Campagne : "Whopper Détour" (2018)
+
+Insight consommateur : Les fans de fast-food sont foncièrement opportunistes — ils iront toujours vers le meilleur deal, même si ça implique un détour absurde. La rivalité BK/McDonald's fait partie de la culture pop.
+
+Concept créatif : Via l'app Burger King, les clients à moins de 180 mètres d'un McDonald's débloquent un Whopper à 1 centime. Le géofencing transforme les restaurants concurrents en point de commande Burger King. Le détour devient le jeu.
+
+Exécutions existantes : Activation app mobile avec géofencing, film digital explicatif 60s, social media (tweets provocateurs, map des détours), RP/earned media.
+
+Ton : Provocateur, joueur, second degré. L'humour vient de l'audace du dispositif plus que du script. Burger King assume la rivalité frontalement, avec une pointe d'autodérision.
+
+Signature : "Burger King — Home of the Whopper"`,
+]
 
 
 // ─── Visual mockup components ───
@@ -791,7 +819,7 @@ export default function App() {
             </button>
             <button
               className="btn btn-secondary"
-              onClick={() => setBrief(SAMPLE_BRIEF)}
+              onClick={() => setBrief(SAMPLE_BRIEFS[Math.floor(Math.random() * SAMPLE_BRIEFS.length)])}
             >
               Charger un exemple
             </button>
