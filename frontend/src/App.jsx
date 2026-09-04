@@ -24,12 +24,12 @@ const VISUAL_FORMATS = [
 ]
 
 const PIPELINE_STEPS = [
-  { key: 'analyze', label: 'Analyse de la campagne' },
-  { key: 'scenarios', label: 'Scénarios créatifs' },
-  { key: 'plan', label: 'Planification des remixes' },
-  { key: 'write', label: 'Génération créative' },
-  { key: 'check', label: 'Contrôle qualité' },
-  { key: 'visual_direct', label: 'Direction visuelle' },
+  { key: 'analyze', label: 'Décryptage' },
+  { key: 'scenarios', label: 'Directions créatives' },
+  { key: 'plan', label: 'Cadrage formats' },
+  { key: 'write', label: 'Écriture' },
+  { key: 'check', label: 'Quality gate' },
+  { key: 'visual_direct', label: 'Visuels' },
 ]
 
 const SAMPLE_BRIEF = `Client : Intermarché
@@ -241,7 +241,7 @@ function VisualCard({ visual, conceptText }) {
         <div className="visual-card-info">
           {conceptText && (
             <div className="vi-concept-block">
-              <div className="vi-concept-label">Concept adapté</div>
+              <div className="vi-concept-label">Concept</div>
               <div className="vi-concept-text">{conceptText}</div>
             </div>
           )}
@@ -477,17 +477,11 @@ export default function App() {
       md += `## ${i + 1}. ${remix.format_label}\n\n`
       md += `**Specs:** ${remix.format_specs}\n\n`
       md += `### Concept adapté\n${remix.adapted_concept}\n\n`
-      md += `### Headline\n> ${remix.headline}\n\n`
-      md += `### Description narrative\n${remix.narrative_description}\n\n`
-      md += `### Notes de production\n${remix.production_notes}\n\n`
-      md += `### Tone check\n${remix.tone_check}\n\n`
-      md += `**Score qualité:** ${quality.score}/10\n\n`
-      if (quality.strengths.length) {
-        md += `**Points forts:** ${quality.strengths.join(', ')}\n\n`
-      }
-      if (quality.issues.length) {
-        md += `**Points d'attention:** ${quality.issues.join(', ')}\n\n`
-      }
+      md += `### Accroche\n> ${remix.headline}\n\n`
+      md += `### Script & narration\n${remix.narrative_description}\n\n`
+      md += `### Notes de prod\n${remix.production_notes}\n\n`
+      md += `### Cohérence tonale\n${remix.tone_check}\n\n`
+      md += `**Score:** ${quality.score}/10\n\n`
       md += `---\n\n`
     })
 
@@ -533,7 +527,7 @@ export default function App() {
       {/* Header */}
       <header className="header">
         <h1><span>Remix</span> Engine</h1>
-        <p className="tagline">Feed it a campaign. Get it everywhere.</p>
+        <p className="tagline">Une campagne en entrée. Tous les formats en sortie.</p>
       </header>
 
       {/* Step dots */}
@@ -556,10 +550,10 @@ export default function App() {
       {/* Step 1: Input */}
       {step === 'input' && (
         <div className="card">
-          <h2>01 — Brief de campagne</h2>
+          <h2>01 — Le brief</h2>
           <textarea
             className="brief-textarea"
-            placeholder="Décrivez la campagne : client, insight, concept créatif, exécutions existantes, ton..."
+            placeholder="Collez votre brief : client, insight, concept créatif, exécutions, ton de voix..."
             value={brief}
             onChange={e => setBrief(e.target.value)}
           />
@@ -569,13 +563,13 @@ export default function App() {
               disabled={brief.trim().length < 50}
               onClick={runAnalysis}
             >
-              Analyser la campagne
+              Lancer le décryptage
             </button>
             <button
               className="btn btn-secondary"
               onClick={() => setBrief(SAMPLE_BRIEF)}
             >
-              Essayer un exemple
+              Charger un exemple
             </button>
           </div>
         </div>
@@ -585,22 +579,22 @@ export default function App() {
       {step === 'formats' && analysis && (
         <>
           <div className="card" style={{ marginBottom: 24 }}>
-            <h2>Analyse créative</h2>
+            <h2>Décryptage</h2>
             <div className="analysis-grid">
               <div className="analysis-item">
                 <div className="label">Marque & Catégorie</div>
                 <div className="value">{analysis.brand} — {analysis.category}</div>
               </div>
               <div className="analysis-item">
-                <div className="label">Insight consommateur</div>
+                <div className="label">Insight conso</div>
                 <div className="value">{analysis.consumer_insight}</div>
               </div>
               <div className="analysis-item">
-                <div className="label">Concept créatif</div>
+                <div className="label">Concept créa</div>
                 <div className="value">{analysis.creative_concept}</div>
               </div>
               <div className="analysis-item">
-                <div className="label">Territoire d'expression</div>
+                <div className="label">Territoire de marque</div>
                 <div className="value">{analysis.tone_of_voice}</div>
               </div>
               {analysis.signature && (
@@ -612,13 +606,13 @@ export default function App() {
             </div>
             <div className="btn-row">
               <button className="btn btn-secondary" onClick={() => setStep('input')}>
-                Corriger l'analyse
+                Modifier le brief
               </button>
             </div>
           </div>
 
           <div className="card" style={{ marginBottom: 24 }}>
-            <h2>02 — Choisir les formats texte ({selectedFormats.length}/5)</h2>
+            <h2>02 — Formats cibles ({selectedFormats.length}/5)</h2>
             <div className="formats-grid">
               {FORMATS.map(f => (
                 <div
@@ -632,22 +626,22 @@ export default function App() {
               ))}
             </div>
 
-            <h2 style={{ marginTop: 32 }}>Options (facultatif)</h2>
+            <h2 style={{ marginTop: 32 }}>Affinage</h2>
             <div className="optional-fields">
               <div className="field-group">
-                <label>Audience cible</label>
+                <label>Audience</label>
                 <input
                   className="field-input"
-                  placeholder="Ex: Gen Z, B2B, seniors..."
+                  placeholder="Gen Z, B2B, seniors..."
                   value={audience}
                   onChange={e => setAudience(e.target.value)}
                 />
               </div>
               <div className="field-group">
-                <label>Marché cible</label>
+                <label>Marché</label>
                 <input
                   className="field-input"
-                  placeholder="Ex: US, UK, DACH..."
+                  placeholder="US, UK, DACH..."
                   value={market}
                   onChange={e => setMarket(e.target.value)}
                 />
@@ -657,9 +651,9 @@ export default function App() {
 
           {/* Visual format selector */}
           <div className="card" style={{ marginBottom: 24 }}>
-            <h2>03 — Visuels IA (optionnel)</h2>
+            <h2>03 — Direction visuelle</h2>
             <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
-              Génère des mockups visuels avec Nano Banana pour chaque format sélectionné.
+              Mockups IA générés pour chaque format. Powered by Nano Banana.
             </p>
             <div className="formats-grid">
               {VISUAL_FORMATS.map(f => (
@@ -682,11 +676,11 @@ export default function App() {
                 disabled={selectedFormats.length === 0}
                 onClick={runRemix}
               >
-                Générer {selectedFormats.length} déclinaison{selectedFormats.length > 1 ? 's' : ''}
+                Lancer le remix → {selectedFormats.length} format{selectedFormats.length > 1 ? 's' : ''}
                 {selectedVisualFormats.length > 0 && ` + ${selectedVisualFormats.length} visuel${selectedVisualFormats.length > 1 ? 's' : ''}`}
               </button>
               <button className="btn btn-secondary" onClick={() => setStep('input')}>
-                Retour
+                ← Retour
               </button>
             </div>
           </div>
@@ -720,15 +714,15 @@ export default function App() {
         <>
           <div className="export-bar">
             <h2 className="section-heading">
-              {results.length} déclinaison{results.length > 1 ? 's' : ''} générée{results.length > 1 ? 's' : ''}
-              {scenarios.length > 0 && ` · ${scenarios.length} scénarios`}
+              {results.length} déclinaison{results.length > 1 ? 's' : ''}
+              {scenarios.length > 0 && ` · ${scenarios.length} directions créa`}
             </h2>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-secondary" onClick={exportMarkdown}>
-                Exporter .md
+                Export .md
               </button>
               <button className="btn btn-secondary" onClick={reset}>
-                Nouveau remix
+                Nouveau brief
               </button>
             </div>
           </div>
@@ -773,12 +767,12 @@ export default function App() {
           {scenarios.length > 0 && scenarios[activeScenario] && (
             <div className="scenario-detail-card">
               <div className="scenario-detail-header">
-                <span className="scenario-detail-badge">Scénario {scenarios[activeScenario].id}</span>
+                <span className="scenario-detail-badge">Direction {scenarios[activeScenario].id}</span>
                 <h3 className="scenario-detail-title">{scenarios[activeScenario].title}</h3>
               </div>
               <div className="scenario-detail-body">
                 <div className="scenario-detail-row">
-                  <span className="scenario-detail-label">Angle créatif</span>
+                  <span className="scenario-detail-label">Angle</span>
                   <span className="scenario-detail-value">{scenarios[activeScenario].angle}</span>
                 </div>
                 <div className="scenario-detail-row">
@@ -797,7 +791,7 @@ export default function App() {
                   Visual Director — {visuals.length} format{visuals.length > 1 ? 's' : ''}
                 </h2>
                 <button className="btn btn-secondary" onClick={regenerateVisuals}>
-                  Re-générer
+                  Regénérer
                 </button>
               </div>
               <div className="visuals-grid">
@@ -823,7 +817,7 @@ export default function App() {
           {visuals.length === 0 && selectedVisualFormats.length === 0 && (
             <div className="card" style={{ marginTop: 0, marginBottom: 32, textAlign: 'center' }}>
               <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
-                Ajouter des visuels IA à ce remix ?
+                Envie de visuels IA pour ce remix ?
               </p>
               <div className="formats-grid" style={{ marginBottom: 16 }}>
                 {VISUAL_FORMATS.map(f => (
@@ -839,7 +833,7 @@ export default function App() {
               </div>
               {selectedVisualFormats.length > 0 && (
                 <button className="btn btn-primary" onClick={regenerateVisuals}>
-                  Générer {selectedVisualFormats.length} visuel{selectedVisualFormats.length > 1 ? 's' : ''}
+                  Lancer {selectedVisualFormats.length} visuel{selectedVisualFormats.length > 1 ? 's' : ''}
                 </button>
               )}
             </div>
@@ -854,7 +848,7 @@ export default function App() {
               <>
                 <div className="export-bar" style={{ marginTop: visuals.length > 0 ? 32 : 0 }}>
                   <h2 className="section-heading">
-                    Déclinaisons texte
+                    Copies
                     {scenarios.length > 0 && scenarios[activeScenario] && ` — ${scenarios[activeScenario].title}`}
                   </h2>
                 </div>
@@ -874,7 +868,7 @@ export default function App() {
                         </div>
 
                         <div className="remix-section">
-                          <div className="section-label">Headline</div>
+                          <div className="section-label">Accroche</div>
                           <div className="headline-value">{r.remix.headline}</div>
                         </div>
 
@@ -884,42 +878,20 @@ export default function App() {
                         </div>
 
                         <details className="remix-details-section">
-                          <summary className="section-label">Narration détaillée</summary>
+                          <summary className="section-label">Script & narration</summary>
                           <div className="section-value">{r.remix.narrative_description}</div>
                         </details>
 
                         <details className="remix-details-section">
-                          <summary className="section-label">Notes de production</summary>
+                          <summary className="section-label">Notes de prod</summary>
                           <div className="section-value">{r.remix.production_notes}</div>
                         </details>
 
                         <div className="remix-section">
-                          <div className="section-label">Tone check</div>
+                          <div className="section-label">Cohérence tonale</div>
                           <div className="section-value">{r.remix.tone_check}</div>
                         </div>
 
-                        {(r.quality.strengths.length > 0 || r.quality.issues.length > 0) && (
-                          <div className="quality-notes">
-                            {r.quality.strengths.length > 0 && (
-                              <>
-                                <div className="qn-label">Points forts</div>
-                                <div className="qn-items">{r.quality.strengths.join(' · ')}</div>
-                              </>
-                            )}
-                            {r.quality.issues.length > 0 && (
-                              <>
-                                <div className="qn-label" style={{ color: 'var(--warning)', marginTop: 8 }}>Points d'attention</div>
-                                <div className="qn-items">{r.quality.issues.join(' · ')}</div>
-                              </>
-                            )}
-                            {r.quality.suggestion && (
-                              <>
-                                <div className="qn-label" style={{ color: 'var(--text-secondary)', marginTop: 8 }}>Suggestion</div>
-                                <div className="qn-items">{r.quality.suggestion}</div>
-                              </>
-                            )}
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
