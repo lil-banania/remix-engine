@@ -101,12 +101,21 @@ async def check_quality(state: GraphState) -> dict:
             if sid is not None:
                 scenario_map.setdefault(sid, []).append(r)
 
+        # Group existing visuals by scenario_id (if any were generated before check)
+        visual_map: dict[int, list] = {}
+        for v in (state.visuals or []):
+            vid = getattr(v, "scenario_id", None)
+            if vid is not None:
+                visual_map.setdefault(vid, []).append(
+                    v.to_api_dict() if hasattr(v, "to_api_dict") else v
+                )
+
         updated_scenario_results = []
         for sr in state.scenario_results:
             updated_scenario_results.append(ScenarioResult(
                 scenario=sr.scenario,
                 results=scenario_map.get(sr.scenario.id, []),
-                visuals=[],
+                visuals=visual_map.get(sr.scenario.id, []),
             ))
 
         return {

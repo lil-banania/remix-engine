@@ -97,8 +97,14 @@ async def _generate_briefs(
     brand: str,
     analysis_text: str,
     visual_formats: list[VisualFormat],
+    scenario_context: str = "",
 ) -> dict:
-    """Use Claude to generate visual briefs for requested formats."""
+    """Use Claude to generate visual briefs for requested formats.
+
+    Args:
+        scenario_context: Optional creative direction context (angle, mood)
+            to inject into the brief generation prompt.
+    """
     llm = get_llm()
 
     format_list = "\n".join(
@@ -138,7 +144,7 @@ async def _generate_briefs(
     prompt = f"""\
 CAMPAIGN ANALYSIS:
 {analysis_text}
-
+{scenario_context}
 BRAND: {brand}
 CONCEPT: {concept}
 
@@ -167,43 +173,16 @@ Return ONLY valid JSON with this structure:
     return json.loads(text.strip())
 
 
-async def generate_visuals(state: GraphState) -> dict:
-    """Generate visual briefs and images for requested formats.
+async def _build_outputs_for_briefs(
+    briefs_data: dict,
+    visual_formats: list[VisualFormat],
+    gemini_client,
+    scenario_id: int | None = None,
+) -> list[VisualOutput]:
+    """Generate images and build VisualOutput objects from briefs data.
 
-    This is the main LangGraph node function.
+    Generates images sequentially (rate-limited) for each format.
     """
-    print("[visual_director] === Starting visual generation ===")
-
-    if not state.analysis:
-        print("[visual_director] ERROR: Missing campaign analysis")
-        return {"error": "Missing campaign analysis"}
-
-    # Determine which visual formats to generate
-    visual_formats = state.visual_formats or []
-    if not visual_formats:
-        # Default: generate all 4 if no specific request
-        visual_formats = list(VisualFormat)
-
-    print(f"[visual_director] Formats requested: {[f.value for f in visual_formats]}")
-
-    brand = state.analysis.brand
-    concept = state.analysis.creative_concept
-    analysis_text = state.analysis.model_dump_json(indent=2)
-
-    # Step 1: Generate creative briefs via Claude
-    print(f"[visual_director] Generating briefs via {MODEL}...")
-    try:
-        briefs_data = await _generate_briefs(
-            concept, brand, analysis_text, visual_formats,
-        )
-        print(f"[visual_director] Briefs generated OK — keys: {list(briefs_data.keys())}")
-    except Exception as e:
-        print(f"[visual_director] ERROR: Brief generation failed: {e}")
-        return {"error": f"Brief generation failed: {e}"}
-
-    # Step 2: Generate images via Nano Banana
-    gemini_client = _get_gemini_client()
-    print(f"[visual_director] Gemini client: {'OK' if gemini_client else 'NONE (no GEMINI_API_KEY)'}")
     outputs: list[VisualOutput] = []
 
     for fmt in visual_formats:
@@ -213,13 +192,11 @@ async def generate_visuals(state: GraphState) -> dict:
         if fmt == VisualFormat.STORYBOARD:
             # Storyboard: 4 frames
             frames_data = brief_data.get("frames", [])
-            frame_images = []
             frames = []
             for i, fd in enumerate(frames_data[:4]):
                 img = None
                 if gemini_client:
                     img = await _generate_image(fd.get("image_prompt", ""), gemini_client)
-                    # Rate limit pause
                     await asyncio.sleep(2)
                 frames.append(StoryboardFrame(
                     image_prompt=fd.get("image_prompt", ""),
@@ -236,6 +213,7 @@ async def generate_visuals(state: GraphState) -> dict:
                 image_prompt="",
                 image_b64=None,
                 storyboard_frames=frames,
+                scenario_id=scenario_id,
             ))
         else:
             # Single-image format
@@ -255,13 +233,102 @@ async def generate_visuals(state: GraphState) -> dict:
                 image_prompt=brief_data.get("image_prompt", ""),
                 image_b64=img,
                 storyboard_frames=None,
+                scenario_id=scenario_id,
             ))
 
-    print(f"[visual_director] === Done — {len(outputs)} visuals generated ===")
-    for o in outputs:
-        print(f"  [{o.format.value}] headline={o.headline[:40]}... has_image={o.has_image()}")
+    return outputs
+
+
+async def generate_visuals(state: GraphState) -> dict:
+    """Generate visual briefs and images for requested formats.
+
+    This is the main LangGraph node function.
+
+    If scenarios exist, generates visuals SEQUENTIALLY per scenario
+    (formats in parallel within each scenario via brief generation).
+    Each visual is tagged with its scenario_id.
+    """
+    print("[visual_director] === Starting visual generation ===")
+
+    if not state.analysis:
+        print("[visual_director] ERROR: Missing campaign analysis")
+        return {"error": "Missing campaign analysis"}
+
+    # Determine which visual formats to generate
+    visual_formats = state.visual_formats or []
+    if not visual_formats:
+        visual_formats = list(VisualFormat)
+
+    print(f"[visual_director] Formats requested: {[f.value for f in visual_formats]}")
+
+    brand = state.analysis.brand
+    concept = state.analysis.creative_concept
+    analysis_text = state.analysis.model_dump_json(indent=2)
+
+    gemini_client = _get_gemini_client()
+    print(f"[visual_director] Gemini client: {'OK' if gemini_client else 'NONE (no GEMINI_API_KEY)'}")
+
+    scenarios = state.scenarios or []
+    all_outputs: list[VisualOutput] = []
+
+    if scenarios:
+        # ── Per-scenario visual generation (sequential) ──
+        print(f"[visual_director] Generating visuals for {len(scenarios)} scenarios × {len(visual_formats)} formats")
+
+        for scenario in scenarios:
+            scenario_context = f"""
+CREATIVE DIRECTION FOR THESE VISUALS:
+- Direction: "{scenario.title}"
+- Angle: {scenario.angle}
+- Mood: {scenario.mood}
+
+IMPORTANT: The visuals MUST reflect this specific creative direction.
+The image prompts, headlines, and art direction should embody this angle and mood,
+not just the generic campaign concept.
+"""
+            print(f"[visual_director] --- Scenario {scenario.id}: '{scenario.title}' ---")
+
+            # Step 1: Generate briefs for this scenario
+            try:
+                briefs_data = await _generate_briefs(
+                    concept, brand, analysis_text, visual_formats,
+                    scenario_context=scenario_context,
+                )
+                print(f"[visual_director]   Briefs OK — keys: {list(briefs_data.keys())}")
+            except Exception as e:
+                print(f"[visual_director]   ERROR: Brief generation failed for scenario {scenario.id}: {e}")
+                continue
+
+            # Step 2: Generate images for this scenario
+            scenario_outputs = await _build_outputs_for_briefs(
+                briefs_data, visual_formats, gemini_client,
+                scenario_id=scenario.id,
+            )
+            all_outputs.extend(scenario_outputs)
+            print(f"[visual_director]   {len(scenario_outputs)} visuals done for scenario {scenario.id}")
+
+    else:
+        # ── Legacy mode: no scenarios ──
+        print(f"[visual_director] Legacy mode (no scenarios) — generating {len(visual_formats)} visuals")
+        try:
+            briefs_data = await _generate_briefs(
+                concept, brand, analysis_text, visual_formats,
+            )
+            print(f"[visual_director] Briefs generated OK — keys: {list(briefs_data.keys())}")
+        except Exception as e:
+            print(f"[visual_director] ERROR: Brief generation failed: {e}")
+            return {"error": f"Brief generation failed: {e}"}
+
+        all_outputs = await _build_outputs_for_briefs(
+            briefs_data, visual_formats, gemini_client,
+        )
+
+    print(f"[visual_director] === Done — {len(all_outputs)} visuals generated ===")
+    for o in all_outputs:
+        sid = f" [scenario {o.scenario_id}]" if o.scenario_id else ""
+        print(f"  [{o.format.value}]{sid} headline={o.headline[:40]}... has_image={o.has_image()}")
 
     return {
-        "visuals": outputs,
+        "visuals": all_outputs,
         "current_step": "visualized",
     }

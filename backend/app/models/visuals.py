@@ -78,6 +78,10 @@ class VisualOutput(BaseModel):
         default=None,
         description="Storyboard frames (only for storyboard format)",
     )
+    scenario_id: Optional[int] = Field(
+        default=None,
+        description="Scenario ID this visual belongs to (None for legacy single-scenario mode)",
+    )
 
     def has_image(self) -> bool:
         if self.storyboard_frames:
@@ -94,6 +98,7 @@ class VisualOutput(BaseModel):
             "art_direction": self.art_direction,
             "image_prompt": self.image_prompt,
             "has_image": self.has_image(),
+            "scenario_id": self.scenario_id,
         }
         if self.image_b64:
             d["image_b64"] = self.image_b64

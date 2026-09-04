@@ -144,7 +144,7 @@ async def analyze(req: AnalyzeRequest):
 
 @app.post("/remix", response_model=RemixResponse)
 async def remix(req: RemixRequestBody):
-    """Run the full remix pipeline: analyze -> scenarios -> plan -> write -> check [-> visual_direct]."""
+    """Run the full remix pipeline: analyze → plan → write → check [→ visual_direct]."""
     from app.models.campaign import RemixRequest
 
     initial_state = GraphState(
@@ -222,10 +222,21 @@ async def remix_stream(req: RemixRequestBody):
                 if node_name == "visual_direct" and node_output.get("visuals"):
                     try:
                         visuals_list = node_output["visuals"]
-                        payload["visuals"] = [
+                        serialized_visuals = [
                             v.to_api_dict() if hasattr(v, "to_api_dict") else v
                             for v in visuals_list
                         ]
+                        payload["visuals"] = serialized_visuals
+
+                        # Group visuals by scenario_id and update scenario_results
+                        visual_by_scenario: dict[int, list] = {}
+                        for sv in serialized_visuals:
+                            sid = sv.get("scenario_id")
+                            if sid is not None:
+                                visual_by_scenario.setdefault(sid, []).append(sv)
+
+                        if visual_by_scenario:
+                            payload["visuals_by_scenario"] = visual_by_scenario
                     except Exception as e:
                         print(f"[SSE] Error serializing visuals: {e}")
                         payload["error"] = f"Visual serialization failed: {e}"
@@ -242,7 +253,7 @@ async def remix_stream(req: RemixRequestBody):
 
 @app.post("/visuals/generate")
 async def generate_visuals_standalone(req: VisualsRequest):
-    """Standalone visual generation -- runs analyze + visual_direct only.
+    """Standalone visual generation — runs analyze + visual_direct only.
 
     Use this to (re-)generate visuals separately from the text remix pipeline.
     """

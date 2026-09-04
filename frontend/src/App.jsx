@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useMemo } from 'react'
 import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
@@ -22,6 +22,13 @@ const VISUAL_FORMATS = [
   { key: 'print', label: 'Affiche / Print', detail: '3:4 · Poster' },
   { key: 'storyboard', label: 'Storyboard', detail: '16:9 · 4 frames' },
 ]
+
+// Auto-mapping: text format → visual format
+const TEXT_TO_VISUAL_MAP = {
+  tiktok: 'tiktok',
+  instagram_reels: 'story',
+  print_press: 'print',
+}
 
 const PIPELINE_STEPS = [
   { key: 'analyze', label: 'Décryptage' },
@@ -266,7 +273,7 @@ export default function App() {
   const [step, setStep] = useState('input') // input | formats | loading | results
   const [brief, setBrief] = useState('')
   const [selectedFormats, setSelectedFormats] = useState([])
-  const [selectedVisualFormats, setSelectedVisualFormats] = useState([])
+  const [extraVisualFormats, setExtraVisualFormats] = useState([]) // manually added visual formats
   const [audience, setAudience] = useState('')
   const [market, setMarket] = useState('')
   const [analysis, setAnalysis] = useState(null)
@@ -279,6 +286,34 @@ export default function App() {
   const [completedSteps, setCompletedSteps] = useState([])
   const [error, setError] = useState('')
 
+  // --- Auto-mapped visual formats (derived from selected text formats) ---
+  const autoVisualFormats = useMemo(() => {
+    const mapped = []
+    for (const fmt of selectedFormats) {
+      const visual = TEXT_TO_VISUAL_MAP[fmt]
+      if (visual && !mapped.includes(visual)) {
+        mapped.push(visual)
+      }
+    }
+    return mapped
+  }, [selectedFormats])
+
+  // Combined visual formats = auto-mapped + manually added extras (deduplicated)
+  const allVisualFormats = useMemo(() => {
+    const combined = [...autoVisualFormats]
+    for (const fmt of extraVisualFormats) {
+      if (!combined.includes(fmt)) {
+        combined.push(fmt)
+      }
+    }
+    return combined
+  }, [autoVisualFormats, extraVisualFormats])
+
+  // Visual formats available for manual addition (not already auto-mapped)
+  const manualVisualOptions = useMemo(() => {
+    return VISUAL_FORMATS.filter(f => !autoVisualFormats.includes(f.key))
+  }, [autoVisualFormats])
+
   // --- Format selection ---
   const toggleFormat = (key) => {
     setSelectedFormats(prev =>
@@ -290,8 +325,8 @@ export default function App() {
     )
   }
 
-  const toggleVisualFormat = (key) => {
-    setSelectedVisualFormats(prev =>
+  const toggleExtraVisualFormat = (key) => {
+    setExtraVisualFormats(prev =>
       prev.includes(key)
         ? prev.filter(k => k !== key)
         : [...prev, key]
@@ -335,7 +370,7 @@ export default function App() {
     setVisuals([])
 
     // Filter pipeline steps based on whether visuals are requested
-    const activeSteps = selectedVisualFormats.length > 0
+    const activeSteps = allVisualFormats.length > 0
       ? PIPELINE_STEPS
       : PIPELINE_STEPS.filter(s => s.key !== 'visual_direct')
 
@@ -348,7 +383,7 @@ export default function App() {
           formats: selectedFormats,
           target_audience: audience || null,
           target_market: market || null,
-          visual_formats: selectedVisualFormats,
+          visual_formats: allVisualFormats,
         }),
       })
 
@@ -407,11 +442,18 @@ export default function App() {
               if (payload.results) finalResults = payload.results
               if (payload.scenario_results) finalScenarioResults = payload.scenario_results
               setCompletedSteps(prev => [...new Set([...prev, 'check'])])
-              if (selectedVisualFormats.length > 0) {
+              if (allVisualFormats.length > 0) {
                 setLoadingStep('visual_direct')
               }
             } else if (node === 'visual_direct') {
               if (payload.visuals) finalVisuals = payload.visuals
+              // If we have visuals grouped by scenario, update scenario_results
+              if (payload.visuals_by_scenario && finalScenarioResults.length > 0) {
+                finalScenarioResults = finalScenarioResults.map(sr => ({
+                  ...sr,
+                  visuals: payload.visuals_by_scenario[sr.scenario.id] || sr.visuals || [],
+                }))
+              }
               setCompletedSteps(prev => [...new Set([...prev, 'visual_direct'])])
             }
           } catch (e) {
@@ -431,11 +473,11 @@ export default function App() {
       setError(err.message)
       setStep('formats')
     }
-  }, [brief, selectedFormats, selectedVisualFormats, audience, market])
+  }, [brief, selectedFormats, allVisualFormats, audience, market])
 
   // --- Regenerate visuals only ---
   const regenerateVisuals = useCallback(async () => {
-    if (!brief || selectedVisualFormats.length === 0) return
+    if (!brief || allVisualFormats.length === 0) return
 
     setError('')
     setVisuals([])
@@ -446,7 +488,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           campaign_brief: brief,
-          visual_formats: selectedVisualFormats,
+          visual_formats: allVisualFormats,
         }),
       })
 
@@ -460,7 +502,7 @@ export default function App() {
     } catch (err) {
       setError(err.message)
     }
-  }, [brief, selectedVisualFormats])
+  }, [brief, allVisualFormats])
 
   // --- Export Markdown ---
   const exportMarkdown = useCallback(() => {
@@ -499,7 +541,7 @@ export default function App() {
     setStep('input')
     setBrief('')
     setSelectedFormats([])
-    setSelectedVisualFormats([])
+    setExtraVisualFormats([])
     setAudience('')
     setMarket('')
     setAnalysis(null)
@@ -513,8 +555,8 @@ export default function App() {
     setError('')
   }
 
-  // --- Active pipeline steps (filter out visual_direct if not selected) ---
-  const activeSteps = selectedVisualFormats.length > 0
+  // --- Active pipeline steps (filter out visual_direct if no visuals) ---
+  const activeSteps = allVisualFormats.length > 0
     ? PIPELINE_STEPS
     : PIPELINE_STEPS.filter(s => s.key !== 'visual_direct')
 
@@ -575,7 +617,7 @@ export default function App() {
         </div>
       )}
 
-      {/* Step 2: Analysis + Format selection */}
+      {/* Step 2: Analysis + Format selection + Visual auto-mapping */}
       {step === 'formats' && analysis && (
         <>
           <div className="card" style={{ marginBottom: 24 }}>
@@ -622,9 +664,50 @@ export default function App() {
                 >
                   <span className="chip-label">{f.label}</span>
                   <span className="chip-detail">{f.detail}</span>
+                  {TEXT_TO_VISUAL_MAP[f.key] && selectedFormats.includes(f.key) && (
+                    <span className="chip-visual-tag">+ visuel auto</span>
+                  )}
                 </div>
               ))}
             </div>
+
+            {/* Auto-mapped visual formats summary */}
+            {autoVisualFormats.length > 0 && (
+              <div className="auto-visuals-summary">
+                <div className="auto-visuals-label">Visuels IA auto-générés par direction créa</div>
+                <div className="auto-visuals-chips">
+                  {autoVisualFormats.map(key => {
+                    const vf = VISUAL_FORMATS.find(f => f.key === key)
+                    return vf ? (
+                      <span key={key} className="auto-visual-chip">
+                        {vf.label}
+                      </span>
+                    ) : null
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Manual extra visual format addition */}
+            {manualVisualOptions.length > 0 && (
+              <div className="extra-visuals-section">
+                <div className="extra-visuals-label">
+                  Ajouter des visuels supplémentaires
+                </div>
+                <div className="formats-grid">
+                  {manualVisualOptions.map(f => (
+                    <div
+                      key={f.key}
+                      className={`format-chip visual-chip ${extraVisualFormats.includes(f.key) ? 'selected' : ''}`}
+                      onClick={() => toggleExtraVisualFormat(f.key)}
+                    >
+                      <span className="chip-label">{f.label}</span>
+                      <span className="chip-detail">{f.detail}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <h2 style={{ marginTop: 32 }}>Affinage</h2>
             <div className="optional-fields">
@@ -649,26 +732,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Visual format selector */}
-          <div className="card" style={{ marginBottom: 24 }}>
-            <h2>03 — Direction visuelle</h2>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
-              Mockups IA générés pour chaque format. Powered by Nano Banana.
-            </p>
-            <div className="formats-grid">
-              {VISUAL_FORMATS.map(f => (
-                <div
-                  key={f.key}
-                  className={`format-chip visual-chip ${selectedVisualFormats.includes(f.key) ? 'selected' : ''}`}
-                  onClick={() => toggleVisualFormat(f.key)}
-                >
-                  <span className="chip-label">{f.label}</span>
-                  <span className="chip-detail">{f.detail}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           <div className="card">
             <div className="btn-row">
               <button
@@ -677,7 +740,7 @@ export default function App() {
                 onClick={runRemix}
               >
                 Lancer le remix → {selectedFormats.length} format{selectedFormats.length > 1 ? 's' : ''}
-                {selectedVisualFormats.length > 0 && ` + ${selectedVisualFormats.length} visuel${selectedVisualFormats.length > 1 ? 's' : ''}`}
+                {allVisualFormats.length > 0 && ` + ${allVisualFormats.length} visuel${allVisualFormats.length > 1 ? 's' : ''}`}
               </button>
               <button className="btn btn-secondary" onClick={() => setStep('input')}>
                 ← Retour
@@ -783,38 +846,51 @@ export default function App() {
             </div>
           )}
 
-          {/* Visual Director Results — shown first */}
-          {visuals.length > 0 && (
-            <div className="visuals-section">
-              <div className="export-bar visuals-bar">
-                <h2 className="section-heading section-heading--accent">
-                  Visual Director — {visuals.length} format{visuals.length > 1 ? 's' : ''}
-                </h2>
-                <button className="btn btn-secondary" onClick={regenerateVisuals}>
-                  Regénérer
-                </button>
-              </div>
-              <div className="visuals-grid">
-                {visuals.map((v, i) => {
-                  // Match visual format to a remix result to get adapted_concept
-                  const formatMap = { tiktok: 'tiktok', story: 'instagram_reels', print: 'print_press', storyboard: 'tiktok' }
-                  const matchFormat = formatMap[v.format] || v.format
-                  const activeResults = scenarioResults.length > 0 && scenarios.length > 0
-                    ? (scenarioResults[activeScenario]?.results || [])
-                    : results
-                  const matchedRemix = activeResults.find(r => r.remix.format === matchFormat)
-                  const conceptText = matchedRemix
-                    ? matchedRemix.remix.adapted_concept
-                    : (analysis?.creative_concept || '')
+          {/* Visual Director Results — filtered by active scenario */}
+          {(() => {
+            // Filter visuals by active scenario
+            const activeScenarioId = scenarios.length > 0 && scenarios[activeScenario]
+              ? scenarios[activeScenario].id
+              : null
 
-                  return <VisualCard key={i} visual={v} conceptText={conceptText} />
-                })}
-              </div>
-            </div>
-          )}
+            const filteredVisuals = activeScenarioId !== null
+              ? visuals.filter(v => v.scenario_id === activeScenarioId)
+              : visuals // legacy: show all
 
-          {/* Standalone visual generation button when no visuals were requested */}
-          {visuals.length === 0 && selectedVisualFormats.length === 0 && (
+            if (filteredVisuals.length === 0) return null
+
+            return (
+              <div className="visuals-section">
+                <div className="export-bar visuals-bar">
+                  <h2 className="section-heading section-heading--accent">
+                    Visual Director — {filteredVisuals.length} format{filteredVisuals.length > 1 ? 's' : ''}
+                  </h2>
+                  <button className="btn btn-secondary" onClick={regenerateVisuals}>
+                    Regénérer
+                  </button>
+                </div>
+                <div className="visuals-grid">
+                  {filteredVisuals.map((v, i) => {
+                    // Match visual format to a remix result to get adapted_concept
+                    const formatMap = { tiktok: 'tiktok', story: 'instagram_reels', print: 'print_press', storyboard: 'tiktok' }
+                    const matchFormat = formatMap[v.format] || v.format
+                    const activeResults = scenarioResults.length > 0 && scenarios.length > 0
+                      ? (scenarioResults[activeScenario]?.results || [])
+                      : results
+                    const matchedRemix = activeResults.find(r => r.remix.format === matchFormat)
+                    const conceptText = matchedRemix
+                      ? matchedRemix.remix.adapted_concept
+                      : (analysis?.creative_concept || '')
+
+                    return <VisualCard key={`${v.format}-${v.scenario_id}-${i}`} visual={v} conceptText={conceptText} />
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+
+          {/* Standalone visual generation button when no visuals exist */}
+          {visuals.length === 0 && allVisualFormats.length === 0 && (
             <div className="card" style={{ marginTop: 0, marginBottom: 32, textAlign: 'center' }}>
               <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 16 }}>
                 Envie de visuels IA pour ce remix ?
@@ -823,17 +899,17 @@ export default function App() {
                 {VISUAL_FORMATS.map(f => (
                   <div
                     key={f.key}
-                    className={`format-chip visual-chip ${selectedVisualFormats.includes(f.key) ? 'selected' : ''}`}
-                    onClick={() => toggleVisualFormat(f.key)}
+                    className={`format-chip visual-chip ${extraVisualFormats.includes(f.key) ? 'selected' : ''}`}
+                    onClick={() => toggleExtraVisualFormat(f.key)}
                   >
                     <span className="chip-label">{f.label}</span>
                     <span className="chip-detail">{f.detail}</span>
                   </div>
                 ))}
               </div>
-              {selectedVisualFormats.length > 0 && (
+              {allVisualFormats.length > 0 && (
                 <button className="btn btn-primary" onClick={regenerateVisuals}>
-                  Lancer {selectedVisualFormats.length} visuel{selectedVisualFormats.length > 1 ? 's' : ''}
+                  Lancer {allVisualFormats.length} visuel{allVisualFormats.length > 1 ? 's' : ''}
                 </button>
               )}
             </div>
