@@ -119,3 +119,8 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Force light theme by default — Ramp-inspired design is light-first */
+:root {
+  color-scheme: light;
+}
