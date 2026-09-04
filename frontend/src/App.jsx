@@ -220,7 +220,7 @@ function StoryboardMockup({ visual }) {
   )
 }
 
-function VisualCard({ visual }) {
+function VisualCard({ visual, conceptText }) {
   const MockupComponent = {
     tiktok: TikTokMockup,
     story: StoryMockup,
@@ -239,6 +239,12 @@ function VisualCard({ visual }) {
           {MockupComponent && <MockupComponent visual={visual} />}
         </div>
         <div className="visual-card-info">
+          {conceptText && (
+            <div className="vi-concept-block">
+              <div className="vi-concept-label">Concept adapté</div>
+              <div className="vi-concept-text">{conceptText}</div>
+            </div>
+          )}
           <div className="vi-headline">{visual.headline}</div>
           {visual.subline && <div className="vi-subline">{visual.subline}</div>}
           <div className="vi-art-direction">{visual.art_direction}</div>
@@ -526,7 +532,7 @@ export default function App() {
     <div className="app">
       {/* Header */}
       <header className="header">
-        <h1>Remix</h1>
+        <h1><span>Remix</span> Engine</h1>
         <p className="tagline">Feed it a campaign. Get it everywhere.</p>
       </header>
 
@@ -713,11 +719,11 @@ export default function App() {
       {step === 'results' && results.length > 0 && (
         <>
           <div className="export-bar">
-            <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)' }}>
+            <h2 className="section-heading">
               {results.length} déclinaison{results.length > 1 ? 's' : ''} générée{results.length > 1 ? 's' : ''}
               {scenarios.length > 0 && ` · ${scenarios.length} scénarios`}
             </h2>
-            <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-secondary" onClick={exportMarkdown}>
                 Exporter .md
               </button>
@@ -787,7 +793,7 @@ export default function App() {
           {visuals.length > 0 && (
             <div className="visuals-section">
               <div className="export-bar visuals-bar">
-                <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--accent)' }}>
+                <h2 className="section-heading section-heading--accent">
                   Visual Director — {visuals.length} format{visuals.length > 1 ? 's' : ''}
                 </h2>
                 <button className="btn btn-secondary" onClick={regenerateVisuals}>
@@ -795,9 +801,20 @@ export default function App() {
                 </button>
               </div>
               <div className="visuals-grid">
-                {visuals.map((v, i) => (
-                  <VisualCard key={i} visual={v} />
-                ))}
+                {visuals.map((v, i) => {
+                  // Match visual format to a remix result to get adapted_concept
+                  const formatMap = { tiktok: 'tiktok', story: 'instagram_reels', print: 'print_press', storyboard: 'tiktok' }
+                  const matchFormat = formatMap[v.format] || v.format
+                  const activeResults = scenarioResults.length > 0 && scenarios.length > 0
+                    ? (scenarioResults[activeScenario]?.results || [])
+                    : results
+                  const matchedRemix = activeResults.find(r => r.remix.format === matchFormat)
+                  const conceptText = matchedRemix
+                    ? matchedRemix.remix.adapted_concept
+                    : (analysis?.creative_concept || '')
+
+                  return <VisualCard key={i} visual={v} conceptText={conceptText} />
+                })}
               </div>
             </div>
           )}
@@ -835,8 +852,8 @@ export default function App() {
               : results
             return (
               <>
-                <div className="export-bar" style={{ marginTop: visuals.length > 0 ? 40 : 0 }}>
-                  <h2 style={{ fontFamily: 'var(--mono)', fontSize: 14, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, color: 'var(--text-muted)' }}>
+                <div className="export-bar" style={{ marginTop: visuals.length > 0 ? 32 : 0 }}>
+                  <h2 className="section-heading">
                     Déclinaisons texte
                     {scenarios.length > 0 && scenarios[activeScenario] && ` — ${scenarios[activeScenario].title}`}
                   </h2>

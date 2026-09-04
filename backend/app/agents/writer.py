@@ -104,10 +104,10 @@ async def write_remixes(state: GraphState) -> dict:
             "current_step": "written",
         }
 
-    # Multi-scenario mode: generate remixes for each scenario x format
+    # Multi-scenario mode: generate remixes for each scenario × format
     from app.models.scenario import ScenarioResult
 
-    print(f"[writer] Generating remixes for {len(scenarios)} scenarios x {len(state.planned_formats)} formats")
+    print(f"[writer] Generating remixes for {len(scenarios)} scenarios × {len(state.planned_formats)} formats")
 
     all_tasks = []
     task_map = []  # (scenario_index, format) for each task
@@ -129,9 +129,10 @@ IMPORTANT: Your remix MUST follow this specific creative direction. The concept 
 
     all_remixes_raw = await asyncio.gather(*all_tasks)
 
-    # Group remixes by scenario
+    # Tag each remix with its scenario_id and group by scenario
     scenario_remixes: dict[int, list] = {i: [] for i in range(len(scenarios))}
     for remix, (scenario_idx, _fmt) in zip(all_remixes_raw, task_map):
+        remix.scenario_id = scenarios[scenario_idx].id
         scenario_remixes[scenario_idx].append(remix)
 
     all_scenario_results = []
