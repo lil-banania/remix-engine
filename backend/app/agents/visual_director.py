@@ -42,6 +42,10 @@ For each requested format, generate:
 - **Instagram Story** (9:16): polished brand moment, swipeable, aspirational
 - **Print / Affiche** (3:4): classic poster, strong visual hierarchy, headline-dominant
 - **Storyboard** (16:9): 4 sequential prompts — setup → tension → reveal → payoff
+- **LinkedIn Post** (1.91:1): professional, clean, corporate context — office or business environment, thought-leadership visual
+- **Page Web** (16:9): hero section of an interactive experience — immersive, editorial, full-bleed
+- **Newsletter** (600:400): email header visual — clean, brand-forward, works at 600px width
+- **OOH Digital** (16:9): digital billboard / urban screen — bold at distance, simple composition, high-impact
 
 ## Rules
 - Image prompts must be vivid, specific, and photorealistic by default

@@ -13,6 +13,10 @@ class VisualFormat(str, Enum):
     STORY = "story"
     PRINT = "print"
     STORYBOARD = "storyboard"
+    LINKEDIN = "linkedin"
+    WEB = "web"
+    NEWSLETTER = "newsletter"
+    OOH = "ooh"
 
 
 VISUAL_FORMAT_SPECS: dict[VisualFormat, dict] = {
@@ -35,6 +39,26 @@ VISUAL_FORMAT_SPECS: dict[VisualFormat, dict] = {
         "label": "Storyboard",
         "aspect_ratio": "16:9",
         "description": "4-frame narrative sequence: setup, tension, reveal, payoff",
+    },
+    VisualFormat.LINKEDIN: {
+        "label": "LinkedIn Post",
+        "aspect_ratio": "1.91:1",
+        "description": "Professional B2B post card, clean corporate visual, thought-leadership energy",
+    },
+    VisualFormat.WEB: {
+        "label": "Page Web",
+        "aspect_ratio": "16:9",
+        "description": "Hero section of an interactive web experience, immersive and responsive",
+    },
+    VisualFormat.NEWSLETTER: {
+        "label": "Newsletter",
+        "aspect_ratio": "600:400",
+        "description": "Email header visual, 600px-wide, clean and brand-forward",
+    },
+    VisualFormat.OOH: {
+        "label": "OOH Digital",
+        "aspect_ratio": "16:9",
+        "description": "Digital billboard or urban screen, bold at distance, high-impact visual",
     },
 }
 

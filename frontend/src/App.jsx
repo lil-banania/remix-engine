@@ -21,6 +21,10 @@ const VISUAL_FORMATS = [
   { key: 'story', label: 'Instagram Story', detail: '9:16 · Vertical' },
   { key: 'print', label: 'Affiche / Print', detail: '3:4 · Poster' },
   { key: 'storyboard', label: 'Storyboard', detail: '16:9 · 4 frames' },
+  { key: 'linkedin', label: 'LinkedIn Post', detail: '1.91:1 · B2B' },
+  { key: 'web', label: 'Page Web', detail: '16:9 · Hero' },
+  { key: 'newsletter', label: 'Newsletter', detail: '600px · Email' },
+  { key: 'ooh', label: 'OOH Digital', detail: '16:9 · Billboard' },
 ]
 
 // Auto-mapping: text format → visual format
@@ -28,6 +32,10 @@ const TEXT_TO_VISUAL_MAP = {
   tiktok: 'tiktok',
   instagram_reels: 'story',
   print_press: 'print',
+  linkedin_b2b: 'linkedin',
+  web_interactive: 'web',
+  newsletter: 'newsletter',
+  ooh_digital: 'ooh',
 }
 
 const PIPELINE_STEPS = [
@@ -227,12 +235,186 @@ function StoryboardMockup({ visual }) {
   )
 }
 
+function LinkedInMockup({ visual }) {
+  const imgSrc = visual.image_b64
+    ? `data:image/png;base64,${visual.image_b64}`
+    : null
+
+  return (
+    <div className="li-card">
+      {/* LinkedIn header */}
+      <div className="li-header">
+        <div className="li-avatar">B</div>
+        <div className="li-meta">
+          <div className="li-name">Brand Officiel</div>
+          <div className="li-desc">12 345 abonnés · 2h</div>
+        </div>
+        <div className="li-more">···</div>
+      </div>
+
+      {/* Post text */}
+      <div className="li-text">
+        <p>{visual.headline}</p>
+        {visual.subline && <p className="li-subline">{visual.subline}</p>}
+      </div>
+
+      {/* Image */}
+      <div className="li-image-wrap">
+        {imgSrc && <img src={imgSrc} alt="" />}
+        {!imgSrc && <div className="vm-placeholder" style={{ aspectRatio: '1.91/1' }}>Image non générée</div>}
+      </div>
+
+      {/* Engagement bar */}
+      <div className="li-engagement">
+        <span>👍 128</span>
+        <span>12 commentaires · 3 partages</span>
+      </div>
+
+      {/* Action bar */}
+      <div className="li-actions">
+        <div className="li-action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9V3.5L20.5 10 14 16.5V11c-5.52 0-9.42 1.72-12 6 1.14-5.71 4.58-11.37 12-12z" transform="scale(-1,1) translate(-24,0)"/></svg>
+          J'aime
+        </div>
+        <div className="li-action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Commenter
+        </div>
+        <div className="li-action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M14 9V3.5L20.5 10 14 16.5V11c-5.52 0-9.42 1.72-12 6 1.14-5.71 4.58-11.37 12-12z"/></svg>
+          Partager
+        </div>
+        <div className="li-action">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          Envoyer
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WebMockup({ visual }) {
+  const imgSrc = visual.image_b64
+    ? `data:image/png;base64,${visual.image_b64}`
+    : null
+
+  return (
+    <div className="web-browser">
+      {/* Browser chrome */}
+      <div className="web-toolbar">
+        <div className="web-dots">
+          <span className="web-dot red" />
+          <span className="web-dot yellow" />
+          <span className="web-dot green" />
+        </div>
+        <div className="web-address-bar">
+          <span className="web-lock">🔒</span>
+          <span>www.brand-campaign.com</span>
+        </div>
+      </div>
+
+      {/* Hero section */}
+      <div className="web-viewport">
+        <div className="web-hero">
+          {imgSrc && <img className="web-hero-img" src={imgSrc} alt="" />}
+          {!imgSrc && <div className="vm-placeholder" style={{ aspectRatio: '16/9' }}>Image non générée</div>}
+          <div className="web-hero-overlay">
+            <h2 className="web-hero-headline">{visual.headline}</h2>
+            {visual.subline && (
+              <div className="web-hero-cta">{visual.subline}</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NewsletterMockup({ visual }) {
+  const imgSrc = visual.image_b64
+    ? `data:image/png;base64,${visual.image_b64}`
+    : null
+
+  return (
+    <div className="nl-email">
+      {/* Email client chrome */}
+      <div className="nl-toolbar">
+        <div className="nl-toolbar-left">
+          <span className="nl-icon">←</span>
+          <span className="nl-icon">🗑</span>
+          <span className="nl-icon">📁</span>
+        </div>
+        <div className="nl-toolbar-right">
+          <span className="nl-icon">⟳</span>
+          <span className="nl-icon">···</span>
+        </div>
+      </div>
+
+      <div className="nl-meta">
+        <div className="nl-from">
+          <div className="nl-from-avatar">B</div>
+          <div>
+            <div className="nl-from-name">Brand Officiel</div>
+            <div className="nl-from-email">hello@brand.com</div>
+          </div>
+        </div>
+        <div className="nl-date">Aujourd'hui, 10:30</div>
+      </div>
+
+      <div className="nl-subject">{visual.headline}</div>
+
+      {/* Email body */}
+      <div className="nl-body">
+        <div className="nl-hero-img">
+          {imgSrc && <img src={imgSrc} alt="" />}
+          {!imgSrc && <div className="vm-placeholder" style={{ aspectRatio: '600/400' }}>Image non générée</div>}
+        </div>
+        {visual.subline && (
+          <div className="nl-cta-row">
+            <div className="nl-cta-btn">{visual.subline}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function OOHMockup({ visual }) {
+  const imgSrc = visual.image_b64
+    ? `data:image/png;base64,${visual.image_b64}`
+    : null
+
+  return (
+    <div className="ooh-frame">
+      {/* Billboard frame */}
+      <div className="ooh-screen">
+        {imgSrc && <img className="ooh-img" src={imgSrc} alt="" />}
+        {!imgSrc && <div className="vm-placeholder" style={{ aspectRatio: '16/9' }}>Image non générée</div>}
+        <div className="ooh-overlay">
+          <div className="ooh-headline">{visual.headline}</div>
+          {visual.subline && <div className="ooh-subline">{visual.subline}</div>}
+        </div>
+      </div>
+      <div className="ooh-base">
+        <div className="ooh-pillar" />
+      </div>
+      <div className="ooh-context">
+        <div className="ooh-street" />
+      </div>
+    </div>
+  )
+}
+
 function VisualCard({ visual, conceptText }) {
   const MockupComponent = {
     tiktok: TikTokMockup,
     story: StoryMockup,
     print: PrintMockup,
     storyboard: StoryboardMockup,
+    linkedin: LinkedInMockup,
+    web: WebMockup,
+    newsletter: NewsletterMockup,
+    ooh: OOHMockup,
   }[visual.format] || null
 
   return (
@@ -853,9 +1035,13 @@ export default function App() {
               ? scenarios[activeScenario].id
               : null
 
-            const filteredVisuals = activeScenarioId !== null
+            // Graceful fallback: if no visuals have scenario_id (old backend),
+            // show all visuals on every scenario instead of hiding them
+            const hasScenarioVisuals = visuals.some(v => v.scenario_id != null)
+
+            const filteredVisuals = activeScenarioId !== null && hasScenarioVisuals
               ? visuals.filter(v => v.scenario_id === activeScenarioId)
-              : visuals // legacy: show all
+              : visuals // legacy or no scenario_id: show all
 
             if (filteredVisuals.length === 0) return null
 
@@ -872,7 +1058,7 @@ export default function App() {
                 <div className="visuals-grid">
                   {filteredVisuals.map((v, i) => {
                     // Match visual format to a remix result to get adapted_concept
-                    const formatMap = { tiktok: 'tiktok', story: 'instagram_reels', print: 'print_press', storyboard: 'tiktok' }
+                    const formatMap = { tiktok: 'tiktok', story: 'instagram_reels', print: 'print_press', storyboard: 'tiktok', linkedin: 'linkedin_b2b', web: 'web_interactive', newsletter: 'newsletter', ooh: 'ooh_digital' }
                     const matchFormat = formatMap[v.format] || v.format
                     const activeResults = scenarioResults.length > 0 && scenarios.length > 0
                       ? (scenarioResults[activeScenario]?.results || [])
