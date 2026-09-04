@@ -89,9 +89,19 @@ Signature : "Burger King — Home of the Whopper"`,
 ]
 
 
+// ─── Helpers ───
+
+function brandHandle(name) {
+  return '@' + name.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '')
+}
+
+function brandInitial(name) {
+  return (name || 'B')[0].toUpperCase()
+}
+
 // ─── Visual mockup components ───
 
-function TikTokMockup({ visual }) {
+function TikTokMockup({ visual, brandName }) {
   const imgSrc = visual.image_b64
     ? `data:image/png;base64,${visual.image_b64}`
     : null
@@ -113,7 +123,7 @@ function TikTokMockup({ visual }) {
         {/* Right actions */}
         <div className="tt-actions">
           <div className="tt-avatar">
-            {(visual.format_label || 'T')[0]}
+            {brandInitial(brandName)}
             <div className="tt-avatar-plus">+</div>
           </div>
           <div className="tt-action">
@@ -137,12 +147,12 @@ function TikTokMockup({ visual }) {
 
         {/* Bottom info */}
         <div className="tt-bottom">
-          <div className="tt-username">@brand_officiel</div>
+          <div className="tt-username">{brandHandle(brandName)}</div>
           <div className="tt-desc">{visual.headline} {visual.subline}</div>
           <div className="tt-sound">
             <span className="tt-sound-icon">♫</span>
             <div className="tt-marquee">
-              <span>Son original — Brand&nbsp;&nbsp;&nbsp;&nbsp;Son original — Brand</span>
+              <span>Son original — {brandName}&nbsp;&nbsp;&nbsp;&nbsp;Son original — {brandName}</span>
             </div>
           </div>
         </div>
@@ -173,7 +183,7 @@ function TikTokMockup({ visual }) {
   )
 }
 
-function StoryMockup({ visual }) {
+function StoryMockup({ visual, brandName }) {
   const imgSrc = visual.image_b64
     ? `data:image/png;base64,${visual.image_b64}`
     : null
@@ -194,9 +204,9 @@ function StoryMockup({ visual }) {
 
         {/* Header */}
         <div className="ig-header">
-          <div className="ig-avatar"><div className="ig-avatar-inner">T</div></div>
+          <div className="ig-avatar"><div className="ig-avatar-inner">{brandInitial(brandName)}</div></div>
           <div>
-            <div className="ig-name">brand_officiel</div>
+            <div className="ig-name">{brandHandle(brandName).slice(1)}</div>
             <div className="ig-time">Il y a 2h</div>
           </div>
           <div className="ig-more">···</div>
@@ -221,7 +231,7 @@ function StoryMockup({ visual }) {
   )
 }
 
-function PrintMockup({ visual }) {
+function PrintMockup({ visual, brandName }) {
   const imgSrc = visual.image_b64
     ? `data:image/png;base64,${visual.image_b64}`
     : null
@@ -230,7 +240,7 @@ function PrintMockup({ visual }) {
     <div className="print-poster">
       {imgSrc && <img src={imgSrc} alt="" />}
       {!imgSrc && <div className="vm-placeholder" style={{ aspectRatio: '3/4' }}>Image non générée</div>}
-      <div className="print-logo">BRAND</div>
+      <div className="print-logo">{brandName?.toUpperCase() || 'BRAND'}</div>
       <div className="print-overlay">
         <div className="print-headline">{visual.headline}</div>
         <div className="print-sub">{visual.subline}</div>
@@ -239,7 +249,7 @@ function PrintMockup({ visual }) {
   )
 }
 
-function StoryboardMockup({ visual }) {
+function StoryboardMockup({ visual, brandName }) {
   const frames = visual.storyboard_frames || []
 
   return (
@@ -263,7 +273,7 @@ function StoryboardMockup({ visual }) {
   )
 }
 
-function LinkedInMockup({ visual }) {
+function LinkedInMockup({ visual, brandName }) {
   const imgSrc = visual.image_b64
     ? `data:image/png;base64,${visual.image_b64}`
     : null
@@ -272,9 +282,9 @@ function LinkedInMockup({ visual }) {
     <div className="li-card">
       {/* LinkedIn header */}
       <div className="li-header">
-        <div className="li-avatar">B</div>
+        <div className="li-avatar">{brandInitial(brandName)}</div>
         <div className="li-meta">
-          <div className="li-name">Brand Officiel</div>
+          <div className="li-name">{brandName || 'Brand'}</div>
           <div className="li-desc">12 345 abonnés · 2h</div>
         </div>
         <div className="li-more">···</div>
@@ -321,7 +331,7 @@ function LinkedInMockup({ visual }) {
   )
 }
 
-function WebMockup({ visual }) {
+function WebMockup({ visual, brandName }) {
   const imgSrc = visual.image_b64
     ? `data:image/png;base64,${visual.image_b64}`
     : null
@@ -337,7 +347,7 @@ function WebMockup({ visual }) {
         </div>
         <div className="web-address-bar">
           <span className="web-lock">🔒</span>
-          <span>www.brand-campaign.com</span>
+          <span>www.{(brandName || 'brand').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}.com</span>
         </div>
       </div>
 
@@ -358,7 +368,7 @@ function WebMockup({ visual }) {
   )
 }
 
-function NewsletterMockup({ visual }) {
+function NewsletterMockup({ visual, brandName }) {
   const imgSrc = visual.image_b64
     ? `data:image/png;base64,${visual.image_b64}`
     : null
@@ -380,10 +390,10 @@ function NewsletterMockup({ visual }) {
 
       <div className="nl-meta">
         <div className="nl-from">
-          <div className="nl-from-avatar">B</div>
+          <div className="nl-from-avatar">{brandInitial(brandName)}</div>
           <div>
-            <div className="nl-from-name">Brand Officiel</div>
-            <div className="nl-from-email">hello@brand.com</div>
+            <div className="nl-from-name">{brandName || 'Brand Officiel'}</div>
+            <div className="nl-from-email">hello@{brandHandle(brandName).replace('@', '') || 'brand'}.com</div>
           </div>
         </div>
         <div className="nl-date">Aujourd'hui, 10:30</div>
@@ -407,7 +417,7 @@ function NewsletterMockup({ visual }) {
   )
 }
 
-function OOHMockup({ visual }) {
+function OOHMockup({ visual, brandName }) {
   const imgSrc = visual.image_b64
     ? `data:image/png;base64,${visual.image_b64}`
     : null
@@ -433,7 +443,7 @@ function OOHMockup({ visual }) {
   )
 }
 
-function VisualCard({ visual, conceptText }) {
+function VisualCard({ visual, conceptText, brandName }) {
   const MockupComponent = {
     tiktok: TikTokMockup,
     story: StoryMockup,
@@ -453,7 +463,7 @@ function VisualCard({ visual, conceptText }) {
       </div>
       <div className="visual-card-split">
         <div className="visual-card-mockup">
-          {MockupComponent && <MockupComponent visual={visual} />}
+          {MockupComponent && <MockupComponent visual={visual} brandName={brandName} />}
         </div>
         <div className="visual-card-info">
           {conceptText && (
@@ -1096,7 +1106,7 @@ export default function App() {
                       ? matchedRemix.remix.adapted_concept
                       : (analysis?.creative_concept || '')
 
-                    return <VisualCard key={`${v.format}-${v.scenario_id}-${i}`} visual={v} conceptText={conceptText} />
+                    return <VisualCard key={`${v.format}-${v.scenario_id}-${i}`} visual={v} conceptText={conceptText} brandName={analysis?.brand} />
                   })}
                 </div>
               </div>
