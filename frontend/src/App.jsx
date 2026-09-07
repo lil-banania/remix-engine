@@ -443,7 +443,14 @@ function OOHMockup({ visual, brandName }) {
   )
 }
 
+// Formats that support video clip generation (image → video)
+const VIDEO_FORMATS = new Set(['tiktok', 'story'])
+
 function VisualCard({ visual, conceptText, brandName }) {
+  const [videoState, setVideoState] = useState('idle') // idle | loading | ready | error
+  const [videoUrl, setVideoUrl] = useState(null)
+  const [videoError, setVideoError] = useState(null)
+
   const MockupComponent = {
     tiktok: TikTokMockup,
     story: StoryMockup,
@@ -455,15 +462,87 @@ function VisualCard({ visual, conceptText, brandName }) {
     ooh: OOHMockup,
   }[visual.format] || null
 
+  const canGenerateVideo = VIDEO_FORMATS.has(visual.format) && visual.has_image && visual.image_b64
+
+  async function handleGenerateVideo() {
+    if (!visual.image_b64) return
+    setVideoState('loading')
+    setVideoError(null)
+
+    // Build a motion prompt from the visual's art direction + headline
+    const motionPrompt = `Cinematic slow motion. ${visual.art_direction || ''} Scene: ${visual.image_prompt || visual.headline}. Subtle camera movement, smooth animation, professional advertising quality.`
+
+    try {
+      const resp = await fetch(`${API_URL}/video/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_b64: visual.image_b64,
+          prompt: motionPrompt.slice(0, 500),
+          duration: 5,
+        }),
+      })
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}))
+        throw new Error(errData.detail || `Erreur ${resp.status}`)
+      }
+
+      const data = await resp.json()
+      setVideoUrl(data.video_url)
+      setVideoState('ready')
+    } catch (err) {
+      console.error('[video] Generation failed:', err)
+      setVideoError(err.message || 'Échec de la génération vidéo')
+      setVideoState('error')
+    }
+  }
+
   return (
     <div className="visual-card">
       <div className="visual-card-top">
         <span className="visual-format-tag">{visual.format_label}</span>
         {visual.has_image && <span className="visual-badge">Image IA</span>}
+        {videoState === 'ready' && <span className="visual-badge video-badge">Clip IA</span>}
       </div>
       <div className="visual-card-split">
         <div className="visual-card-mockup">
-          {MockupComponent && <MockupComponent visual={visual} brandName={brandName} />}
+          {/* Show video player when ready, otherwise show static mockup */}
+          {videoState === 'ready' && videoUrl ? (
+            <div className="video-player-wrap">
+              <video
+                src={videoUrl}
+                controls
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="video-player"
+              />
+            </div>
+          ) : (
+            MockupComponent && <MockupComponent visual={visual} brandName={brandName} />
+          )}
+
+          {/* Generate video button */}
+          {canGenerateVideo && videoState === 'idle' && (
+            <button className="btn-generate-video" onClick={handleGenerateVideo}>
+              <span className="btn-video-icon">▶</span> Générer le clip
+            </button>
+          )}
+          {videoState === 'loading' && (
+            <div className="video-loading">
+              <div className="video-spinner" />
+              <span>Génération du clip en cours...</span>
+              <span className="video-loading-sub">≈ 1-2 min via Kling AI</span>
+            </div>
+          )}
+          {videoState === 'error' && (
+            <div className="video-error">
+              <span>⚠ {videoError}</span>
+              <button className="btn-retry-video" onClick={handleGenerateVideo}>Réessayer</button>
+            </div>
+          )}
         </div>
         <div className="visual-card-info">
           {conceptText && (

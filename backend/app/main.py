@@ -97,6 +97,25 @@ class VisualsRequest(BaseModel):
     visual_formats: list[VisualFormat] = Field(min_length=1, max_length=4)
 
 
+class VideoGenerateRequest(BaseModel):
+    """Request to generate a video clip from an existing image."""
+    image_b64: str = Field(
+        min_length=100,
+        description="Base64-encoded source image (PNG/JPEG)",
+    )
+    prompt: str = Field(
+        min_length=5,
+        max_length=500,
+        description="Motion/animation prompt for the video",
+    )
+    duration: int = Field(
+        default=5,
+        ge=5,
+        le=10,
+        description="Clip duration in seconds (5 or 10)",
+    )
+
+
 # --- Routes ---
 
 @app.get("/")
@@ -282,4 +301,35 @@ async def generate_visuals_standalone(req: VisualsRequest):
     return {
         "analysis": state.analysis.model_dump(),
         "visuals": [v.to_api_dict() for v in visuals],
+    }
+
+
+@app.post("/video/generate")
+async def generate_video(req: VideoGenerateRequest):
+    """Generate a short video clip (5-10s) from an existing image via Kling AI.
+
+    This is an on-demand endpoint — the user clicks "Générer le clip" on a
+    video-format visual card after seeing the static image. The endpoint
+    submits the image to Kling AI's image-to-video API and polls until
+    the video is ready (or timeout).
+
+    Returns the video URL for playback.
+    """
+    from app.agents.video_generator import generate_video_from_image
+
+    result = await generate_video_from_image(
+        image_b64=req.image_b64,
+        prompt=req.prompt,
+        duration=req.duration,
+    )
+
+    if result["status"] == "error":
+        raise HTTPException(500, result["error"])
+
+    if result["status"] == "timeout":
+        raise HTTPException(504, result["error"])
+
+    return {
+        "video_url": result["video_url"],
+        "status": result["status"],
     }
