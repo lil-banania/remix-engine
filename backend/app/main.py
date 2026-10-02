@@ -97,6 +97,18 @@ class VisualsRequest(BaseModel):
     visual_formats: list[VisualFormat] = Field(min_length=1, max_length=4)
 
 
+class RegenerateVisualRequest(BaseModel):
+    """Regenerate a single visual image from an edited prompt."""
+    image_prompt: str = Field(
+        min_length=10,
+        max_length=2000,
+        description="The (possibly edited) image generation prompt",
+    )
+    format: str = Field(
+        description="Visual format key (tiktok, story, print, etc.)",
+    )
+
+
 class VideoGenerateRequest(BaseModel):
     """Request to generate a video clip from an existing image."""
     image_b64: str = Field(
@@ -301,6 +313,26 @@ async def generate_visuals_standalone(req: VisualsRequest):
     return {
         "analysis": state.analysis.model_dump(),
         "visuals": [v.to_api_dict() for v in visuals],
+    }
+
+
+@app.post("/visuals/regenerate")
+async def regenerate_visual(req: RegenerateVisualRequest):
+    """Regenerate a single visual image from an edited prompt.
+
+    Skips the full analysis pipeline — only calls the image generator
+    with the provided prompt. Returns the new base64 image.
+    """
+    from app.agents.visual_director import regenerate_single_image
+
+    image_b64 = await regenerate_single_image(req.image_prompt)
+
+    if image_b64 is None:
+        raise HTTPException(500, "Image generation failed — check GEMINI_API_KEY")
+
+    return {
+        "image_b64": image_b64,
+        "format": req.format,
     }
 
 

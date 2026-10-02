@@ -446,10 +446,13 @@ function OOHMockup({ visual, brandName }) {
 // Formats that support video clip generation (image → video)
 const VIDEO_FORMATS = new Set(['tiktok', 'story'])
 
-function VisualCard({ visual, conceptText, brandName }) {
+function VisualCard({ visual, conceptText, brandName, onVisualUpdate }) {
   const [videoState, setVideoState] = useState('idle') // idle | loading | ready | error
   const [videoUrl, setVideoUrl] = useState(null)
   const [videoError, setVideoError] = useState(null)
+  const [editedPrompt, setEditedPrompt] = useState(visual.image_prompt || '')
+  const [regenState, setRegenState] = useState('idle') // idle | loading | error
+  const [promptOpen, setPromptOpen] = useState(false)
 
   const MockupComponent = {
     tiktok: TikTokMockup,
@@ -469,7 +472,6 @@ function VisualCard({ visual, conceptText, brandName }) {
     setVideoState('loading')
     setVideoError(null)
 
-    // Build a motion prompt from the visual's art direction + headline
     const motionPrompt = `Cinematic slow motion. ${visual.art_direction || ''} Scene: ${visual.image_prompt || visual.headline}. Subtle camera movement, smooth animation, professional advertising quality.`
 
     try {
@@ -498,6 +500,47 @@ function VisualCard({ visual, conceptText, brandName }) {
     }
   }
 
+  async function handleRegenerateImage() {
+    if (!editedPrompt.trim()) return
+    setRegenState('loading')
+
+    try {
+      const resp = await fetch(`${API_URL}/visuals/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image_prompt: editedPrompt,
+          format: visual.format,
+        }),
+      })
+
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}))
+        throw new Error(errData.detail || `Erreur ${resp.status}`)
+      }
+
+      const data = await resp.json()
+      // Update the visual in place
+      if (onVisualUpdate && data.image_b64) {
+        onVisualUpdate({
+          ...visual,
+          image_b64: data.image_b64,
+          image_prompt: editedPrompt,
+          has_image: true,
+        })
+      }
+      setRegenState('idle')
+      // Reset video state since image changed
+      setVideoState('idle')
+      setVideoUrl(null)
+    } catch (err) {
+      console.error('[regen] Failed:', err)
+      setRegenState('error')
+    }
+  }
+
+  const promptChanged = editedPrompt !== (visual.image_prompt || '')
+
   return (
     <div className="visual-card">
       <div className="visual-card-top">
@@ -509,7 +552,7 @@ function VisualCard({ visual, conceptText, brandName }) {
         <div className="visual-card-mockup">
           {/* Show video player when ready, otherwise show static mockup */}
           {videoState === 'ready' && videoUrl ? (
-            <div className="video-player-wrap">
+            <div className={`video-player-wrap ${VIDEO_FORMATS.has(visual.format) ? 'video-player-vertical' : ''}`}>
               <video
                 src={videoUrl}
                 controls
@@ -554,11 +597,40 @@ function VisualCard({ visual, conceptText, brandName }) {
           <div className="vi-headline">{visual.headline}</div>
           {visual.subline && <div className="vi-subline">{visual.subline}</div>}
           <div className="vi-art-direction">{visual.art_direction}</div>
+
+          {/* Editable prompt + regenerate */}
           {visual.image_prompt && (
-            <details className="visual-prompt-details">
-              <summary>Voir le prompt</summary>
-              <p>{visual.image_prompt}</p>
-            </details>
+            <div className="vi-prompt-section">
+              <button className="vi-prompt-toggle" onClick={() => setPromptOpen(!promptOpen)}>
+                {promptOpen ? '▾' : '▸'} Prompt image
+              </button>
+              {promptOpen && (
+                <div className="vi-prompt-edit">
+                  <textarea
+                    className="vi-prompt-textarea"
+                    value={editedPrompt}
+                    onChange={e => setEditedPrompt(e.target.value)}
+                    rows={4}
+                  />
+                  <div className="vi-prompt-actions">
+                    <button
+                      className={`btn-regenerate ${regenState === 'loading' ? 'btn-regen-loading' : ''}`}
+                      onClick={handleRegenerateImage}
+                      disabled={regenState === 'loading' || !editedPrompt.trim()}
+                    >
+                      {regenState === 'loading' ? (
+                        <><span className="regen-spinner" /> Régénération...</>
+                      ) : (
+                        <>⟳ Régénérer{promptChanged ? ' (prompt modifié)' : ''}</>
+                      )}
+                    </button>
+                    {regenState === 'error' && (
+                      <span className="regen-error">Échec — réessayez</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -1185,7 +1257,17 @@ export default function App() {
                       ? matchedRemix.remix.adapted_concept
                       : (analysis?.creative_concept || '')
 
-                    return <VisualCard key={`${v.format}-${v.scenario_id}-${i}`} visual={v} conceptText={conceptText} brandName={analysis?.brand} />
+                    return <VisualCard
+                      key={`${v.format}-${v.scenario_id}-${i}`}
+                      visual={v}
+                      conceptText={conceptText}
+                      brandName={analysis?.brand}
+                      onVisualUpdate={(updatedVisual) => {
+                        setVisuals(prev => prev.map((vv, vi) =>
+                          vi === visuals.indexOf(v) ? { ...vv, ...updatedVisual } : vv
+                        ))
+                      }}
+                    />
                   })}
                 </div>
               </div>

@@ -96,6 +96,18 @@ async def _generate_image(prompt: str, gemini_client) -> str | None:
         return None
 
 
+async def regenerate_single_image(prompt: str) -> str | None:
+    """Public wrapper: regenerate one image from a (possibly edited) prompt.
+
+    Used by the /visuals/regenerate endpoint to regenerate a single visual
+    without re-running the full analysis pipeline.
+    """
+    gemini_client = _get_gemini_client()
+    if not gemini_client:
+        return None
+    return await _generate_image(prompt, gemini_client)
+
+
 async def _generate_briefs(
     concept: str,
     brand: str,

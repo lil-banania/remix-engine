@@ -1755,12 +1755,106 @@
 
 .video-player-wrap {
   width: 100%;
-  border-radius: 8px;
+  max-width: 280px;
+  margin: 0 auto;
+  border-radius: 12px;
   overflow: hidden;
   background: #000;
 }
+.video-player-wrap.video-player-vertical {
+  aspect-ratio: 9 / 16;
+  max-height: 480px;
+}
 .video-player {
   width: 100%;
+  height: 100%;
   display: block;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+/* ── Prompt editor + Regenerate ── */
+
+.vi-prompt-section {
+  margin-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  padding-top: 10px;
+}
+.vi-prompt-toggle {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  padding: 0;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+.vi-prompt-toggle:hover {
+  color: var(--text-primary, #333);
+}
+.vi-prompt-edit {
+  margin-top: 8px;
+}
+.vi-prompt-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid rgba(0,0,0,0.12);
   border-radius: 8px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  line-height: 1.5;
+  resize: vertical;
+  background: rgba(0,0,0,0.02);
+  color: var(--text-primary, #333);
+  box-sizing: border-box;
+}
+.vi-prompt-textarea:focus {
+  outline: none;
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.1);
+}
+.vi-prompt-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.btn-regenerate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #2d3436;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-regenerate:hover:not(:disabled) {
+  background: #636e72;
+}
+.btn-regenerate:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn-regen-loading {
+  background: #636e72;
+}
+.regen-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+.regen-error {
+  font-size: 12px;
+  color: #e74c3c;
 }
